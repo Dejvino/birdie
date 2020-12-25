@@ -4,27 +4,35 @@ import gi
 gi.require_version('Gtk', '3.0')
 from gi.repository import Gtk, Gio, GLib
 import os, sys, signal
+from pathlib import Path
 
 from subprocess import check_output
 
 os.chdir(os.path.dirname(sys.argv[0]))
-UI_FILE = "wake-mobile.ui"
+user_folder = str(Path.home()) + "/.config/systemd/user"
+
+UI_FILE = "/usr/share/wake-mobile/wake-mobile.ui"
 LICENSE = Gtk.License.GPL_3_0
 VERSION = "0.1"
 
-startmsg = "Wake your device and issue an alarm"
+dummy_time = "0000-01-01 00:00:00"
+startmsg = "Wake your device and issue an alarm\n(You need to stay logged in)"
 
 class WakeMobile(Gtk.Application):
   alarm_set = False
   alarm_pid = 0
 
-  def __init__(self):
-    Gtk.Application.__init__(self)
+  def __init__(self, application_id):
+    Gtk.Application.__init__(self, application_id=application_id)
 
   def do_startup(self):
     Gtk.Application.do_startup(self)
 
   def do_activate(self):
+    list = Gtk.Application.get_windows(self)
+    if list:
+      list[0].present()
+      return
     self.builder = Gtk.Builder()
     self.builder.add_from_file(UI_FILE)
     self.builder.connect_signals(self)
@@ -42,7 +50,19 @@ class WakeMobile(Gtk.Application):
     self.cancelbutton = self.builder.get_object("cancel")
     self.snoozebutton = self.builder.get_object("snooze")
     self.window.show_all()
-    # TODO: read timer from systemd file(s) and set app state from it
+    try:
+      with open(user_folder + "/wake-up.timer", "r") as f:
+        content = f.read()
+      time_var = content.split("OnCalendar=")[1].split("\n")[0]
+      if time_var != dummy_time:
+        self.alarmtime = GLib.DateTime.new_from_iso8601(time_var, default_tz=GLib.TimeZone.new_local())
+        self.hour.set_value(self.alarmtime.get_hour())
+        self.minute.set_value(self.alarmtime.get_minute())
+        self.second.set_value(self.alarmtime.get_second())
+        self.set_alarm()
+        # TODO: save and restore volume
+    except Exception as e:
+      print(e)
     self.update()
     GLib.timeout_add_seconds(1, self.updater)
 
@@ -54,12 +74,17 @@ class WakeMobile(Gtk.Application):
     self.snoozebutton.set_sensitive(True)
     try:
       if self.volumeoption.get_active():
-        check_output(["pactl", "set-sink-mute", "0", "0"])
-        check_output(["pactl", "set-sink-volume", "0", str(int(self.volumescale.get_value()))+ "%"])
+        try:
+          first_sink = str(check_output(["sh", "-c", "LANGUAGE=C pactl list| grep -m 1 Sink | cut -d '#' -f 2"]), "utf-8").split("\n")[0]
+          check_output(["pactl", "set-sink-mute", first_sink, "0"])
+          check_output(["pactl", "set-sink-volume", first_sink, str(int(self.volumescale.get_value()))+ "%"])
+        except Exception as e:
+          print(e)
       self.alarm_pid, _, _, _ = GLib.spawn_async(["canberra-gtk-play", "-i", "alarm-clock-elapsed", "-l", "999999999"], standard_output=-1, standard_input=-1, standard_error=-1)
       self.errorlabel.set_label("<span color='orange'>Wake up!</span>")
       self.lefttime.set_label("No time left")
-    except:
+    except Exception as e:
+      print(e)
       self.errorlabel.set_label("<span color='red'>Error issuing alarm</span>")
     return True
 
@@ -67,10 +92,15 @@ class WakeMobile(Gtk.Application):
     self.alarm_set = True
     self.window.set_sensitive(False)
     self.disable_elements(True)
-    try: # TODO: use pkexec to write out a user unit and a system unit
-      output = str(check_output(["echo", str(self.alarmtime.to_unix()) ]),'utf8').replace('\n','')
+    try:
+      time_var = self.alarmtime.format("%Y-%m-%d %H:%M:%S")
+      check_output(["./set-user-alarm", time_var])
+      self.gen_user_service()
+      self.gen_user_timer(time_var)
+      self.load_user_timer()
       self.errorlabel.set_label("Alarm is set")
-    except:
+    except Exception as e:
+      print(e)
       self.errorlabel.set_markup("<span color='red'>Error setting wake time</span>")
     self.window.set_sensitive(True)
     self.update()
@@ -93,6 +123,8 @@ class WakeMobile(Gtk.Application):
     self.alarm_set = False
     self.errorlabel.set_label(startmsg)
     self.end_alarm()
+    self.gen_user_timer(dummy_time)
+    self.load_user_timer()
     self.update()
 
   def set_wake_clicked(self, button):
@@ -149,11 +181,39 @@ class WakeMobile(Gtk.Application):
     else:
       self.lefttime.set_label(label)
 
+  def gen_user_service(self):
+    p = os.path.realpath(__file__)
+    # TODO: use "ExecStart=gapplication launch APPID" to not keep the timer service active?
+    content = f"""[Unit]
+Description=User Wake Up Action
+[Service]
+ExecStart="{p}"
+"""
+    with open(user_folder + "/wake-up.service", "w") as f:
+      f.write(content)
+
+  def gen_user_timer(self, time_arg):
+    # TODO: Is "Persistent=true" really needed for race safety?
+    content = f"""[Unit]
+Description=User Wake Up Timer
+[Timer]
+Persistent=true
+AccuracySec=1us
+OnCalendar={time_arg}
+"""
+    with open(user_folder + "/wake-up.timer", "w") as f:
+      f.write(content)
+
+  def load_user_timer(self):
+    check_output(["systemctl", "--user", "daemon-reload"])
+    check_output(["systemctl", "--user", "restart", "wake-up.timer"])
+
 
 if __name__ == "__main__":
+  check_output(["mkdir", "-p", user_folder])
   check_output(["pactl", "--version"])
   check_output(["canberra-gtk-play", "--version"]) # Debian package: gnome-session-canberra
   check_output(["pkexec", "--version"])
-  app = WakeMobile()
+  app = WakeMobile("org.gnome.gitlab.kailueke.WakeMobile")
   exit_status = app.run(sys.argv)
   sys.exit(exit_status)

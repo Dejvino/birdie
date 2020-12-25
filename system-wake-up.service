@@ -1,0 +1,4 @@
+[Unit]
+Description=System Wake Up Action
+[Service]
+ExecStart=/usr/bin/true

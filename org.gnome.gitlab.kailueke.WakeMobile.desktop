@@ -1,0 +1,10 @@
+[Desktop Entry]
+Name=Wake Mobile
+Comment=Wake your device and issue an alarm
+Keywords=time;timer;alarm;
+Exec=wake-mobile
+Icon=org.gnome.clocks
+Terminal=false
+Type=Application
+Categories=GNOME;GTK;Utility;Clock;
+StartupNotify=true
