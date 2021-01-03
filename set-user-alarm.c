@@ -1,3 +1,8 @@
+/*
+  GPL-2+ ("and any later version")
+  Kai Lüke 2020
+*/
+
 #include <errno.h>
 #include <fcntl.h>
 #include <stdio.h>

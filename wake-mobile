@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
 
+# GPL-2+ ("and any later version")
+# Kai Lüke 2020
+
 import gi
 gi.require_version('Gtk', '3.0')
 from gi.repository import Gtk, Gio, GLib

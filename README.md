@@ -9,13 +9,21 @@ A setuid helper binary is used to write systemd timer drop-in unit files for the
 Installation:
 
 ```
-sudo apt install gcc make
+# on Mobian/Debian:
+sudo apt install gcc make checkinstall
+make install-deb
+
+# or generic:
 make install
 ```
 
-Deinstall:
+Deinstallation:
 
 ```
+# on Mobian/Debian:
+sudo dpkg -r wake-mobile
+
+# or generic:
 make uninstall
 ```
 
