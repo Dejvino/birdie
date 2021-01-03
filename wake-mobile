@@ -94,7 +94,7 @@ class WakeMobile(Gtk.Application):
     self.disable_elements(True)
     try:
       time_var = self.alarmtime.format("%Y-%m-%d %H:%M:%S")
-      check_output(["./set-user-alarm", time_var])
+      check_output(["set-user-alarm", time_var])
       self.gen_user_service()
       self.gen_user_timer(time_var)
       self.load_user_timer()
@@ -125,6 +125,7 @@ class WakeMobile(Gtk.Application):
     self.end_alarm()
     self.gen_user_timer(dummy_time)
     self.load_user_timer()
+    check_output(["set-user-alarm"])
     self.update()
 
   def set_wake_clicked(self, button):
