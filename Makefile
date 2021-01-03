@@ -1,12 +1,12 @@
 set-user-alarm: set-user-alarm.c
-	gcc -o set-user-alarm set-user-alarm.c
+	cc -o set-user-alarm set-user-alarm.c
 	sudo chown root:root set-user-alarm
 	sudo chmod +s set-user-alarm
 
 check: set-user-alarm.c
-	gcc -o out.o -c -fanalyzer -Werror -Wall set-user-alarm.c
+	gcc -o out.o -c -fanalyzer -Werror -Wall -Wextra set-user-alarm.c
 	rm out.o
-	scan-build clang -o out.o -c -Werror -Wall set-user-alarm.c
+	scan-build clang -o out.o -c -Werror -Wall -Wextra set-user-alarm.c # may add -Weverything
 	rm out.o
 
 install: set-user-alarm

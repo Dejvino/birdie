@@ -17,13 +17,13 @@ static const char * const folder = "/etc/systemd/system/system-wake-up.timer.d";
 static const char * const prefix = "10-";
 static const char * const suffix = ".conf";
 static char * unit = "[Timer]\n";
-static const int bufsize = 1024;
+static const size_t bufsize = 1024;
 
-int write_all(int fd, char * buf, size_t len) {
-  int r = 0;
-  int written = 0;
-  while (r = write(fd, buf + written, len - written), r < 0 || written < len) {
-    if (r < 0 && errno != EINTR) {
+static int write_all(int fd, char * buf, size_t len) {
+  size_t r = 0;
+  size_t written = 0;
+  while (r = write(fd, buf + written, len - written), r == (size_t) -1 || written < len) {
+    if (r == (size_t) -1 && errno != EINTR) {
       perror("Could not write to file");
       return -1;
     }
@@ -37,7 +37,7 @@ int write_all(int fd, char * buf, size_t len) {
   return 0;
 }
 
-int execute(char * prog, char ** arg) {
+static int execute(char * prog, char ** arg) {
   int p = fork();
   int w = 0;
   switch (p) {
@@ -120,7 +120,7 @@ int main(int argc, char **argv) {
   for (int i = 1; i < argc; i++) {
     int skip = 0;
     sanitized[0] = '\0';
-    for (int j = 0; j < strlen(argv[i]) && j < bufsize - 1; j++) {
+    for (size_t j = 0; j < strlen(argv[i]) && j < bufsize - 1; j++) {
       switch(argv[i][j]) {
         case ' ':
         case '-':
