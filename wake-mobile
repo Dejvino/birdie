@@ -42,6 +42,7 @@ class WakeMobile(Gtk.Application):
     self.second = self.builder.get_object("second")
     self.volumescale = self.builder.get_object("volume")
     self.volumeoption = self.builder.get_object("volumecheck")
+    self.soundvolume = self.builder.get_object("soundvolume")
     self.window = self.builder.get_object("appwindow")
     self.window.set_application(self)
     self.errorlabel = self.builder.get_object("error")
@@ -60,7 +61,11 @@ class WakeMobile(Gtk.Application):
         self.minute.set_value(self.alarmtime.get_minute())
         self.second.set_value(self.alarmtime.get_second())
         self.set_alarm(rewrite=False)
-        # TODO: save and restore volume
+      volume_var = int(content.split("Wake-Mobile-Volume=")[1].split("\n")[0])
+      if volume_var == -1:
+        self.volumeoption.set_active(False)
+      else:
+        self.soundvolume.set_value(volume_var)
     except Exception as e:
       print(e)
     self.update()
@@ -197,12 +202,14 @@ ExecStart="{p}"
 
   def gen_user_timer(self, time_arg):
     # TODO: Is "Persistent=true" really needed for race safety?
+    volume_setting = int(self.volumescale.get_value()) if self.volumeoption.get_active() else -1
     content = f"""[Unit]
 Description=User Wake Up Timer
 [Timer]
 Persistent=true
 AccuracySec=1us
 OnCalendar={time_arg}
+# Wake-Mobile-Volume={volume_setting}
 [Install]
 WantedBy=timers.target
 """
