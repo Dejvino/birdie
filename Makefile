@@ -3,6 +3,12 @@ set-user-alarm: set-user-alarm.c
 	sudo chown root:root set-user-alarm
 	sudo chmod +s set-user-alarm
 
+check: set-user-alarm.c
+	gcc -o out.o -c -fanalyzer -Werror -Wall set-user-alarm.c
+	rm out.o
+	scan-build clang -o out.o -c -Werror -Wall set-user-alarm.c
+	rm out.o
+
 install: set-user-alarm
 	sudo install -o root -g root -m 644 system-wake-up.service /lib/systemd/system/system-wake-up.service
 	sudo install -o root -g root -m 644 system-wake-up.timer /lib/systemd/system/system-wake-up.timer

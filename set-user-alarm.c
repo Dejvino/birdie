@@ -98,6 +98,7 @@ int main(int argc, char **argv) {
   while (f = open(file, O_CREAT | O_WRONLY | O_TRUNC, 0644), f < 0) {
     if (errno != EINTR) {
       perror("Could not open file");
+      free(file);
       return -1;
     }
   }
@@ -113,6 +114,7 @@ int main(int argc, char **argv) {
   char * sanitized = malloc(bufsize);
   if (sanitized == NULL) {
     perror("Could not allocate");
+    free(line);
     return -1;
   }
   for (int i = 1; i < argc; i++) {
@@ -149,6 +151,8 @@ int main(int argc, char **argv) {
     snprintf(line, bufsize, "OnCalendar=%s\n", sanitized);
     line[bufsize - 1] = '\0';
     if (write_all(f, line, strlen(line))) {
+      free(line);
+      free(sanitized);
       return -1;
     }
   }
