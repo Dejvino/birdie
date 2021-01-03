@@ -226,7 +226,6 @@ if __name__ == "__main__":
   check_output(["mkdir", "-p", user_folder])
   check_output(["pactl", "--version"])
   check_output(["canberra-gtk-play", "--version"]) # Debian package: gnome-session-canberra
-  check_output(["pkexec", "--version"])
   app = WakeMobile("org.gnome.gitlab.kailueke.WakeMobile")
   exit_status = app.run(sys.argv)
   sys.exit(exit_status)
