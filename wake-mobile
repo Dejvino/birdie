@@ -124,7 +124,8 @@ class WakeMobile(Gtk.Application):
     self.errorlabel.set_label(startmsg)
     self.end_alarm()
     self.gen_user_timer(dummy_time)
-    self.load_user_timer()
+    check_output(["systemctl", "--user", "daemon-reload"])
+    check_output(["systemctl", "--user", "disable", "--now", "wake-up.timer"])
     check_output(["set-user-alarm"])
     self.update()
 
