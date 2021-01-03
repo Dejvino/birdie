@@ -59,7 +59,7 @@ class WakeMobile(Gtk.Application):
         self.hour.set_value(self.alarmtime.get_hour())
         self.minute.set_value(self.alarmtime.get_minute())
         self.second.set_value(self.alarmtime.get_second())
-        self.set_alarm() # TODO: don't rewrite timer units here
+        self.set_alarm(rewrite=False)
         # TODO: save and restore volume
     except Exception as e:
       print(e)
@@ -88,16 +88,17 @@ class WakeMobile(Gtk.Application):
       self.errorlabel.set_label("<span color='red'>Error issuing alarm</span>")
     return True
 
-  def set_alarm(self):
+  def set_alarm(self, rewrite=True):
     self.alarm_set = True
     self.window.set_sensitive(False)
     self.disable_elements(True)
     try:
-      time_var = self.alarmtime.format("%Y-%m-%d %H:%M:%S")
-      check_output(["set-user-alarm", time_var])
-      self.gen_user_service()
-      self.gen_user_timer(time_var)
-      self.load_user_timer()
+      if rewrite:
+        time_var = self.alarmtime.format("%Y-%m-%d %H:%M:%S")
+        check_output(["set-user-alarm", time_var])
+        self.gen_user_service()
+        self.gen_user_timer(time_var)
+        self.load_user_timer()
       self.errorlabel.set_label("Alarm is set")
     except Exception as e:
       print(e)
