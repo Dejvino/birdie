@@ -59,7 +59,7 @@ class WakeMobile(Gtk.Application):
         self.hour.set_value(self.alarmtime.get_hour())
         self.minute.set_value(self.alarmtime.get_minute())
         self.second.set_value(self.alarmtime.get_second())
-        self.set_alarm()
+        self.set_alarm() # TODO: don't rewrite timer units here
         # TODO: save and restore volume
     except Exception as e:
       print(e)
