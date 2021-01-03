@@ -67,6 +67,10 @@ int execute(char * prog, char ** arg) {
 
 /* this is a setuid helper binary but it could also be done with polkit or a (D-Bus) daemon */
 int main(int argc, char **argv) {
+  if (putenv("PATH=/usr/bin:/usr/sbin:/bin/:/sbin")) { /* Prevent running a different systemctl binary */
+    perror("Error sanitizing PATH");
+    return -1;
+  }
   if (argc > 1 && (strcmp(argv[1], "-h") == 0 || strcmp(argv[1], "--help") == 0)) {
     printf("Usage: %s ARGS...\n", argv[0]);
     printf("Update the drop-in file %s/%sUSER%s with OnCalendar=ARG1, ... values.\n", folder, prefix, suffix);
@@ -156,16 +160,16 @@ int main(int argc, char **argv) {
       return -1;
     }
   }
-  if (putenv("PATH=/usr/bin:/usr/sbin:/bin/:/sbin")) {
-    perror("Error sanitizing PATH");
+  char * reload_args[] = {"systemctl", "daemon-reload", NULL};
+  if (execute("systemctl", reload_args)) {
     return -1;
   }
-  char * arg1[] = {"systemctl", "daemon-reload", NULL};
-  if (execute("systemctl", arg1)) {
+  char * enable_args[] = {"systemctl", "enable", "system-wake-up.timer", NULL};
+  if (execute("systemctl", enable_args)) {
     return -1;
   }
-  char * arg2[] = {"systemctl", "restart", "system-wake-up.timer", NULL};
-  if (execute("systemctl", arg2)) {
+  char * restart_args[] = {"systemctl", "restart", "system-wake-up.timer", NULL};
+  if (execute("systemctl", restart_args)) {
     return -1;
   }
   return 0;
