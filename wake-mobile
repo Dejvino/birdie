@@ -201,12 +201,15 @@ Description=User Wake Up Timer
 Persistent=true
 AccuracySec=1us
 OnCalendar={time_arg}
+[Install]
+WantedBy=timers.target
 """
     with open(user_folder + "/wake-up.timer", "w") as f:
       f.write(content)
 
   def load_user_timer(self):
     check_output(["systemctl", "--user", "daemon-reload"])
+    check_output(["systemctl", "--user", "enable", "wake-up.timer"])
     check_output(["systemctl", "--user", "restart", "wake-up.timer"])
 
 
