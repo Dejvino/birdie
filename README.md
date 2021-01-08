@@ -8,7 +8,7 @@ A setuid helper binary is used to write systemd timer drop-in unit files for the
 
 ## Binary packages for Mobian/Debian
 
-You can download the packages [here](https://gitlab.gnome.org/kailueke/wake-mobile/-/tags/1.0).
+You can download the packages [here](https://gitlab.gnome.org/kailueke/wake-mobile/-/tags/1.1).
 
 
 ## Installation from source:
