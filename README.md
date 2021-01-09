@@ -6,6 +6,8 @@ The user needs to be logged in. Meant to be used with Phosh where this is always
 
 A setuid helper binary is used to write systemd timer drop-in unit files for the user because only system timers can wake the system up from suspend.
 
+![Screenshot](screenshot.png)
+
 ## Binary packages for Mobian/Debian
 
 You can download the packages [here](https://gitlab.gnome.org/kailueke/wake-mobile/-/tags/1.1).
