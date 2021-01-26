@@ -12,6 +12,7 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <unistd.h>
+#include <pwd.h>
 
 static const char * const folder = "/etc/systemd/system/system-wake-up.timer.d";
 static const char * const prefix = "10-";
@@ -78,10 +79,14 @@ int main(int argc, char **argv) {
     printf("Only a numeric format for the value can be given, like \"%%Y-%%m-%%d %%H:%%M:%%S\" or \"@UNIXTIME\".\n");
     return -1;
   }
-  const char * const user = getlogin();
+  const char * user = getlogin();
+  struct passwd * pwuser = getpwuid(getuid());
   if (user == NULL) {
-    perror("Could not get real user name");
-    return -1;
+    if (pwuser == NULL) {
+      perror("Could not get real user name");
+      return -1;
+    }
+    user = pwuser->pw_name;
   }
   if ((mkdir("/etc", 0755) && errno != EEXIST) || (mkdir("/etc/systemd", 0755) && errno != EEXIST) || (mkdir("/etc/systemd/system", 0755) && errno != EEXIST) || (mkdir(folder, 0755) && errno != EEXIST)) {
     perror("Could not create directory");
