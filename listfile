@@ -5,4 +5,5 @@
 /usr/bin/wake-mobile
 /usr/share/wake-mobile/wake-mobile.ui
 /usr/share/applications/org.gnome.gitlab.kailueke.WakeMobile.desktop
+/usr/share/dbus-1/services/org.gnome.gitlab.kailueke.WakeMobile.service
 /usr/share/icons/hicolor/scalable/apps/org.gnome.gitlab.kailueke.WakeMobile.svg

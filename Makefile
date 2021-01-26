@@ -19,6 +19,7 @@ install: set-user-alarm
 	sudo mkdir -p /usr/share/wake-mobile
 	sudo install -o root -g root -m 644 wake-mobile.ui /usr/share/wake-mobile/wake-mobile.ui
 	sudo install -o root -g root -m 644 org.gnome.gitlab.kailueke.WakeMobile.desktop /usr/share/applications/org.gnome.gitlab.kailueke.WakeMobile.desktop
+	sudo install -o root -g root -m 644 org.gnome.gitlab.kailueke.WakeMobile.service /usr/share/dbus-1/services/org.gnome.gitlab.kailueke.WakeMobile.service
 	sudo install -o root -g root -m 644 org.gnome.gitlab.kailueke.WakeMobile.svg /usr/share/icons/hicolor/scalable/apps/org.gnome.gitlab.kailueke.WakeMobile.svg
 
 uninstall:
@@ -28,10 +29,11 @@ uninstall:
 	sudo rm /usr/bin/set-user-alarm
 	sudo rm /usr/bin/wake-mobile
 	sudo rm /usr/share/applications/org.gnome.gitlab.kailueke.WakeMobile.desktop
+	sudo rm /usr/share/dbus-1/services/org.gnome.gitlab.kailueke.WakeMobile.service
 	sudo rm /usr/share/icons/hicolor/scalable/apps/org.gnome.gitlab.kailueke.WakeMobile.svg
 
 clean:
 	rm -f set-user-alarm
 
 install-deb: set-user-alarm
-	sudo checkinstall "--requires=systemd, pulseaudio-utils, gnome-session-canberra" --pkgname=wake-mobile --pkglicense=GPL-2+ --nodoc --pkgversion=1.2 --pkgrelease=1 --include=listfile --deldesc=yes --backup=no -y
+	sudo checkinstall "--requires=systemd, pulseaudio-utils, gnome-session-canberra" --pkgname=wake-mobile --pkglicense=GPL-2+ --nodoc --pkgversion=1.3 --pkgrelease=1 --include=listfile --deldesc=yes --backup=no -y

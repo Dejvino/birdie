@@ -197,11 +197,10 @@ class WakeMobile(Gtk.Application):
 
   def gen_user_service(self):
     p = os.path.realpath(__file__)
-    # TODO: use "ExecStart=gapplication launch APPID" to not keep the timer service active?
     content = f"""[Unit]
 Description=User Wake Up Action
 [Service]
-ExecStart="{p}"
+ExecStart=gapplication launch org.gnome.gitlab.kailueke.WakeMobile
 """
     with open(user_folder + "/wake-up.service", "w") as f:
       f.write(content)
