@@ -36,4 +36,4 @@ clean:
 	rm -f set-user-alarm
 
 install-deb: set-user-alarm
-	sudo checkinstall "--requires=systemd, pulseaudio-utils, gnome-session-canberra" --pkgname=wake-mobile --pkglicense=GPL-2+ --nodoc --pkgversion=1.3 --pkgrelease=1 --include=listfile --deldesc=yes --backup=no -y
+	sudo checkinstall "--requires=systemd, pulseaudio-utils, gnome-session-canberra, python3-psutil" --pkgname=wake-mobile --pkglicense=GPL-2+ --nodoc --pkgversion=1.3 --pkgrelease=1 --include=listfile --deldesc=yes --backup=no -y
