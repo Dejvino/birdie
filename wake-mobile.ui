@@ -75,6 +75,7 @@
                 <property name="adjustment">hours</property>
                 <property name="climb-rate">1</property>
                 <property name="numeric">True</property>
+                <property name="input_purpose">number</property>
               </object>
               <packing>
                 <property name="expand">False</property>
@@ -105,6 +106,7 @@
                 <property name="adjustment">minutes</property>
                 <property name="climb-rate">1</property>
                 <property name="numeric">True</property>
+                <property name="input_purpose">number</property>
               </object>
               <packing>
                 <property name="expand">False</property>
@@ -136,6 +138,7 @@
                 <property name="adjustment">seconds</property>
                 <property name="climb-rate">1</property>
                 <property name="numeric">True</property>
+                <property name="input_purpose">number</property>
               </object>
               <packing>
                 <property name="expand">False</property>
