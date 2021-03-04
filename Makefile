@@ -1,7 +1,6 @@
+CC	?= cc
 set-user-alarm: set-user-alarm.c
-	cc -o set-user-alarm set-user-alarm.c
-	sudo chown root:root set-user-alarm
-	sudo chmod +s set-user-alarm
+	$(CC) ${CFLAGS} -o set-user-alarm set-user-alarm.c
 
 check: set-user-alarm.c
 	gcc -o out.o -c -fanalyzer -Werror -Wall -Wextra set-user-alarm.c
@@ -9,31 +8,30 @@ check: set-user-alarm.c
 	scan-build clang -o out.o -c -Werror -Wall -Wextra set-user-alarm.c # may add -Weverything
 	rm out.o
 
+
 install: set-user-alarm
-	sudo install -o root -g root -m 644 system-wake-up.service /lib/systemd/system/system-wake-up.service
-	sudo install -o root -g root -m 644 system-wake-up.timer /lib/systemd/system/system-wake-up.timer
-	sudo ln -fs /lib/systemd/system/system-wake-up.timer /lib/systemd/system/timers.target.wants/system-wake-up.timer
-	sudo install -o root -g root -m 755 set-user-alarm /usr/bin/set-user-alarm
-	sudo chmod +s /usr/bin/set-user-alarm
-	sudo install -o root -g root -m 755 wake-mobile /usr/bin/wake-mobile
-	sudo mkdir -p /usr/share/wake-mobile
-	sudo install -o root -g root -m 644 wake-mobile.ui /usr/share/wake-mobile/wake-mobile.ui
-	sudo install -o root -g root -m 644 org.gnome.gitlab.kailueke.WakeMobile.desktop /usr/share/applications/org.gnome.gitlab.kailueke.WakeMobile.desktop
-	sudo install -o root -g root -m 644 org.gnome.gitlab.kailueke.WakeMobile.service /usr/share/dbus-1/services/org.gnome.gitlab.kailueke.WakeMobile.service
-	sudo install -o root -g root -m 644 org.gnome.gitlab.kailueke.WakeMobile.svg /usr/share/icons/hicolor/scalable/apps/org.gnome.gitlab.kailueke.WakeMobile.svg
+	ls -lah ${DESTDIR}
+	install -D -o root -g root -m 644 system-wake-up.service ${DESTDIR}/lib/systemd/system/system-wake-up.service
+	install -D -o root -g root -m 644 system-wake-up.timer ${DESTDIR}/lib/systemd/system/system-wake-up.timer
+	install -D -o root -g root -m 4755 set-user-alarm ${DESTDIR}/usr/bin/set-user-alarm
+	install -D -o root -g root -m 755 wake-mobile ${DESTDIR}/usr/bin/wake-mobile
+	install -D -o root -g root -m 644 wake-mobile.ui ${DESTDIR}/usr/share/wake-mobile/wake-mobile.ui
+	install -D -o root -g root -m 644 org.gnome.gitlab.kailueke.WakeMobile.desktop ${DESTDIR}/usr/share/applications/org.gnome.gitlab.kailueke.WakeMobile.desktop
+	install -D -o root -g root -m 644 org.gnome.gitlab.kailueke.WakeMobile.service ${DESTDIR}/usr/share/dbus-1/services/org.gnome.gitlab.kailueke.WakeMobile.service
+	install -D -o root -g root -m 644 org.gnome.gitlab.kailueke.WakeMobile.svg ${DESTDIR}/usr/share/icons/hicolor/scalable/apps/org.gnome.gitlab.kailueke.WakeMobile.svg
 
 uninstall:
-	sudo rm /lib/systemd/system/system-wake-up.service
-	sudo rm /lib/systemd/system/system-wake-up.timer
-	sudo rm /lib/systemd/system/timers.target.wants/system-wake-up.timer
-	sudo rm /usr/bin/set-user-alarm
-	sudo rm /usr/bin/wake-mobile
-	sudo rm /usr/share/applications/org.gnome.gitlab.kailueke.WakeMobile.desktop
-	sudo rm /usr/share/dbus-1/services/org.gnome.gitlab.kailueke.WakeMobile.service
-	sudo rm /usr/share/icons/hicolor/scalable/apps/org.gnome.gitlab.kailueke.WakeMobile.svg
+	rm /lib/systemd/system/system-wake-up.service
+	rm /lib/systemd/system/system-wake-up.timer
+	rm /lib/systemd/system/timers.target.wants/system-wake-up.timer
+	rm /usr/bin/set-user-alarm
+	rm /usr/bin/wake-mobile
+	rm /usr/share/applications/org.gnome.gitlab.kailueke.WakeMobile.desktop
+	rm /usr/share/dbus-1/services/org.gnome.gitlab.kailueke.WakeMobile.service
+	rm /usr/share/icons/hicolor/scalable/apps/org.gnome.gitlab.kailueke.WakeMobile.svg
 
 clean:
 	rm -f set-user-alarm
 
 install-deb: set-user-alarm
-	sudo checkinstall "--requires=systemd, pulseaudio-utils, gnome-session-canberra, python3-psutil" --pkgname=wake-mobile --pkglicense=GPL-2+ --nodoc --pkgversion=1.5 --pkgrelease=0 --include=listfile --deldesc=yes --backup=no -y
+	checkinstall "--requires=systemd, pulseaudio-utils, gnome-session-canberra, python3-psutil" --pkgname=wake-mobile --pkglicense=GPL-2+ --nodoc --pkgversion=1.5 --pkgrelease=0 --include=listfile --deldesc=yes --backup=no -y
