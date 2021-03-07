@@ -88,7 +88,10 @@ int main(int argc, char **argv) {
     }
     user = pwuser->pw_name;
   }
-  if ((mkdir("/etc", 0755) && errno != EEXIST) || (mkdir("/etc/systemd", 0755) && errno != EEXIST) || (mkdir("/etc/systemd/system", 0755) && errno != EEXIST) || (mkdir(folder, 0755) && errno != EEXIST)) {
+  if ((mkdir("/etc", 0755) && errno != EEXIST) ||
+      (mkdir("/etc/systemd", 0755) && errno != EEXIST) ||
+      (mkdir("/etc/systemd/system", 0755) && errno != EEXIST) ||
+      (mkdir(folder, 0755) && errno != EEXIST)) {
     perror("Could not create directory");
     return -1;
   }
