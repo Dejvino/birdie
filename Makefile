@@ -1,6 +1,6 @@
 CC	?= cc
 set-user-alarm: set-user-alarm.c
-	$(CC) ${CFLAGS} -o set-user-alarm set-user-alarm.c
+	$(CC) ${CFLAGS} ${LDFLAGS} -o set-user-alarm set-user-alarm.c
 
 check: set-user-alarm.c
 	gcc -o out.o -c -fanalyzer -Werror -Wall -Wextra set-user-alarm.c
