@@ -10,7 +10,13 @@ A setuid helper binary is used to write systemd timer drop-in unit files for the
 
 ## Binary packages for Mobian/Debian
 
-You can download the packages [here](https://gitlab.gnome.org/kailueke/wake-mobile/-/tags/1.6).
+The package is now included in the Mobian repository, please install it from there:
+
+```
+sudo apt install wake-mobile
+```
+
+Alternatively, you can download the packages [here](https://gitlab.gnome.org/kailueke/wake-mobile/-/tags/1.7).
 
 On the PinePhone download the arm64 deb and install it with `sudo apt install $(ls ./wake-mobile_*_arm64.deb | sort | tail -n 1)`.
 
