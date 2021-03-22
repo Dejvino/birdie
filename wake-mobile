@@ -24,6 +24,7 @@ startmsg = "Wake your device and issue an alarm\n(You need to stay logged in)"
 class WakeMobile(Gtk.Application):
   alarm_set = False
   alarm_pid = 0
+  prev_alarm = None
 
   def __init__(self, application_id):
     Gtk.Application.__init__(self, application_id=application_id)
@@ -60,10 +61,20 @@ class WakeMobile(Gtk.Application):
       time_var = content.split("OnCalendar=")[1].split("\n")[0]
       if time_var != dummy_time:
         self.alarmtime = GLib.DateTime.new_from_iso8601(time_var, default_tz=GLib.TimeZone.new_local())
+        self.prev_alarm = self.alarmtime
         self.hour.set_value(self.alarmtime.get_hour())
         self.minute.set_value(self.alarmtime.get_minute())
         self.second.set_value(self.alarmtime.get_second())
         self.set_alarm(rewrite=False)
+      else:
+        try:
+          prev_alarm_found = content.split("Previous-Alarm=")[1].split("\n")[0]
+          self.prev_alarm = GLib.DateTime.new_from_iso8601(prev_alarm_found, default_tz=GLib.TimeZone.new_local())
+          self.hour.set_value(self.prev_alarm.get_hour())
+          self.minute.set_value(self.prev_alarm.get_minute())
+          self.second.set_value(self.prev_alarm.get_second())
+        except Exception as e:
+          print(e)
       volume_var = int(content.split("Wake-Mobile-Volume=")[1].split("\n")[0])
       if volume_var == -1:
         self.volumeoption.set_active(False)
@@ -143,6 +154,7 @@ class WakeMobile(Gtk.Application):
 
   def set_wake_clicked(self, button):
     self.alarmtime = self.calc_wakeup_time()
+    self.prev_alarm = self.alarmtime
     self.set_alarm()
 
   def disable_elements(self, val):
@@ -208,12 +220,17 @@ ExecStart=gapplication launch org.gnome.gitlab.kailueke.WakeMobile
   def gen_user_timer(self, time_arg):
     # TODO: Is "Persistent=true" really needed for race safety?
     volume_setting = int(self.volumescale.get_value()) if self.volumeoption.get_active() else -1
+    if self.prev_alarm:
+      prev_alarm_found = self.prev_alarm.format("%Y-%m-%d %H:%M:%S")
+    else:
+      prev_alarm_found = dummy_time
     content = f"""[Unit]
 Description=User Wake Up Timer
 [Timer]
 Persistent=true
 AccuracySec=1us
 OnCalendar={time_arg}
+# Previous-Alarm={prev_alarm_found}
 # Wake-Mobile-Volume={volume_setting}
 [Install]
 WantedBy=timers.target
