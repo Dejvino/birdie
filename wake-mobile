@@ -201,7 +201,7 @@ class WakeMobile(Gtk.Application):
 Description=User Wake Up Action
 [Service]
 ExecStart=gapplication launch org.gnome.gitlab.kailueke.WakeMobile
-"""
+""" # Debian package: libglib2.0-bin
     with open(user_folder + "/wake-up.service", "w") as f:
       f.write(content)
 
