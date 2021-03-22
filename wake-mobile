@@ -99,7 +99,7 @@ class WakeMobile(Gtk.Application):
           check_output(["pactl", "set-sink-volume", first_sink, str(int(self.volumescale.get_value()))+ "%"])
         except Exception as e:
           print(e)
-      self.alarm_pid, _, _, _ = GLib.spawn_async(["gnome-session-inhibit", "--inhibit", "suspend", "canberra-gtk-play", "-i", "alarm-clock-elapsed", "-l", "999999999"], standard_output=-1, standard_input=-1, standard_error=-1)
+      self.alarm_pid, _, _, _ = GLib.spawn_async(["/usr/bin/gnome-session-inhibit", "--inhibit", "suspend", "canberra-gtk-play", "-i", "alarm-clock-elapsed", "-l", "999999999"], standard_output=-1, standard_input=-1, standard_error=-1)
       self.errorlabel.set_label("<span color='orange'>Wake up!</span>")
       self.lefttime.set_label("No time left")
     except Exception as e:
