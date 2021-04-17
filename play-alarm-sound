@@ -10,7 +10,7 @@ soundfile = './splashes.ogg'
 volume = 0
 volume_increment = 0.03
 
-Gst.init()
+Gst.init(None)
 mainloop = GLib.MainLoop()
 
 pl = Gst.ElementFactory.make("playbin", "player")
