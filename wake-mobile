@@ -18,8 +18,8 @@ UI_FILE_LOCAL = "./wake-mobile.ui"
 UI_FILE_GLOBAL = "/usr/share/wake-mobile/wake-mobile.ui"
 LICENSE = Gtk.License.GPL_3_0
 VERSION = "0.1"
-ALARM_APP_COMMAND = ["./play-alarm-sound"]
-#ALARM_APP_COMMAND = ["/usr/bin/gnome-session-inhibit", "--inhibit", "suspend", "./play-alarm-sound"]
+#ALARM_APP_COMMAND = ["./play-alarm-sound"]
+ALARM_APP_COMMAND = ["/usr/bin/gnome-session-inhibit", "--inhibit", "suspend", "./play-alarm-sound"]
 
 SET_USER_ALARM_COMMAND = "set-user-alarm"
 
