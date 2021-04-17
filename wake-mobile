@@ -14,9 +14,14 @@ from subprocess import check_output
 os.chdir(os.path.dirname(sys.argv[0]))
 user_folder = str(Path.home()) + "/.config/systemd/user"
 
-UI_FILE = "/usr/share/wake-mobile/wake-mobile.ui"
+UI_FILE_LOCAL = "./wake-mobile.ui"
+UI_FILE_GLOBAL = "/usr/share/wake-mobile/wake-mobile.ui"
 LICENSE = Gtk.License.GPL_3_0
 VERSION = "0.1"
+ALARM_APP_COMMAND = ["./play-alarm-sound"]
+#ALARM_APP_COMMAND = ["/usr/bin/gnome-session-inhibit", "--inhibit", "suspend", "./play-alarm-sound"]
+
+SET_USER_ALARM_COMMAND = "set-user-alarm"
 
 dummy_time = "0000-01-01 00:00:00"
 startmsg = "Wake your device and issue an alarm\n(You need to stay logged in)"
@@ -38,12 +43,18 @@ class WakeMobile(Gtk.Application):
       list[0].present()
       return
     self.builder = Gtk.Builder()
-    self.builder.add_from_file(UI_FILE)
+    if os.path.isfile(UI_FILE_LOCAL):
+      self.builder.add_from_file(UI_FILE_LOCAL)
+    else:
+      self.builder.add_from_file(UI_FILE_GLOBAL)
     self.builder.connect_signals(self)
     self.lefttime = self.builder.get_object("lefttime")
     self.hour = self.builder.get_object("hour")
     self.minute = self.builder.get_object("minute")
-    self.second = self.builder.get_object("second")
+    #self.second = self.builder.get_object("second")
+    self.days = []
+    for n in range(0, 7):
+      self.days.append(self.builder.get_object(f'day{n}'))
     self.volumescale = self.builder.get_object("volume")
     self.volumeoption = self.builder.get_object("volumecheck")
     self.soundvolume = self.builder.get_object("soundvolume")
@@ -64,7 +75,8 @@ class WakeMobile(Gtk.Application):
         self.prev_alarm = self.alarmtime
         self.hour.set_value(self.alarmtime.get_hour())
         self.minute.set_value(self.alarmtime.get_minute())
-        self.second.set_value(self.alarmtime.get_second())
+        #self.second.set_value(self.alarmtime.get_second())
+        self.setwakebutton.set_active(True)
         self.set_alarm(rewrite=False)
       else:
         try:
@@ -72,10 +84,14 @@ class WakeMobile(Gtk.Application):
           self.prev_alarm = GLib.DateTime.new_from_iso8601(prev_alarm_found, default_tz=GLib.TimeZone.new_local())
           self.hour.set_value(self.prev_alarm.get_hour())
           self.minute.set_value(self.prev_alarm.get_minute())
-          self.second.set_value(self.prev_alarm.get_second())
+          #self.second.set_value(self.prev_alarm.get_second())
         except Exception as e:
           print(e)
-      volume_var = int(content.split("Wake-Mobile-Volume=")[1].split("\n")[0])
+      alarm_days = content.split("Alarm-Days=")[1].split("\n")[0].split(',')
+      if len(alarm_days) == 7:
+        for day in range(0, 7):
+          self.set_enabled_day_of_week(day, True if alarm_days[day] == '1' else False)
+      volume_var = int(content.split("Set-Volume=")[1].split("\n")[0])
       if volume_var == -1:
         self.volumeoption.set_active(False)
       else:
@@ -90,6 +106,64 @@ class WakeMobile(Gtk.Application):
     if not self.alarm_set or (self.alarmtime.difference(GLib.DateTime.new_now_local()) > 0):
         return True
     self.alarm_set = False
+    self.start_alarm()
+    return True
+
+  def enable_alarm(self):
+    alarmtime = self.calc_wakeup_time()
+    if not alarmtime:
+      return
+    self.alarmtime = alarmtime
+    self.prev_alarm = self.alarmtime
+    self.set_alarm()
+
+  def disable_alarm(self):
+    self.alarm_set = False
+    self.end_alarm()
+    self.disable_elements(False)
+    self.errorlabel.set_label(startmsg)
+    self.gen_user_timer(dummy_time)
+    check_output(["systemctl", "--user", "daemon-reload"]) # Debian package: systemd
+    check_output(["systemctl", "--user", "disable", "--now", "wake-up.timer"])
+    check_output(["set-user-alarm"])
+    self.update()
+
+  def set_alarm(self, rewrite=True):
+    self.alarm_set = True
+    self.window.set_sensitive(False)
+    self.disable_elements(True)
+    try:
+      if rewrite:
+        time_var = self.alarmtime.format("%Y-%m-%d %H:%M:%S")
+        check_output([SET_USER_ALARM_COMMAND, time_var])
+        self.gen_user_service()
+        self.gen_user_timer(time_var)
+        self.load_user_timer()
+      self.errorlabel.set_label("Alarm is set")
+      print(f"Alarm set for {self.alarmtime.format('%Y-%m-%d %H:%M:%S')}")
+    except Exception as e:
+      print(e)
+      self.errorlabel.set_markup("<span color='red'>Error setting wake time. Check console log.</span>")
+      self.alarm_set = False
+      self.disable_elements(False)
+    self.window.set_sensitive(True)
+    self.update()
+
+  def snooze_clicked(self, button):
+    self.alarmtime = GLib.DateTime.new_now_local().add_minutes(3)
+    self.hour.set_value(self.alarmtime.get_hour())
+    self.minute.set_value(self.alarmtime.get_minute())
+    #self.second.set_value(self.alarmtime.get_second())
+    self.end_alarm()
+    self.set_alarm()
+
+  def test_alarm_clicked(self, button):
+    self.start_alarm()
+    self.snoozebutton.set_sensitive(False)
+
+  def start_alarm(self):
+    self.disable_elements(True)
+    self.cancelbutton.set_sensitive(True)
     self.snoozebutton.set_sensitive(True)
     try:
       if self.volumeoption.get_active():
@@ -99,73 +173,47 @@ class WakeMobile(Gtk.Application):
           check_output(["pactl", "set-sink-volume", first_sink, str(int(self.volumescale.get_value()))+ "%"])
         except Exception as e:
           print(e)
-      self.alarm_pid, _, _, _ = GLib.spawn_async(["/usr/bin/gnome-session-inhibit", "--inhibit", "suspend", "canberra-gtk-play", "-i", "alarm-clock-elapsed", "-l", "999999999"], standard_output=-1, standard_input=-1, standard_error=-1)
+      self.alarm_pid, _, _, _ = GLib.spawn_async(ALARM_APP_COMMAND, standard_output=-1, standard_input=-1, standard_error=-1)
       self.errorlabel.set_label("<span color='orange'>Wake up!</span>")
       self.lefttime.set_label("No time left")
     except Exception as e:
       print(e)
       self.errorlabel.set_label("<span color='red'>Error issuing alarm</span>")
-    return True
-
-  def set_alarm(self, rewrite=True):
-    self.alarm_set = True
-    self.window.set_sensitive(False)
-    self.disable_elements(True)
-    try:
-      if rewrite:
-        time_var = self.alarmtime.format("%Y-%m-%d %H:%M:%S")
-        check_output(["set-user-alarm", time_var])
-        self.gen_user_service()
-        self.gen_user_timer(time_var)
-        self.load_user_timer()
-      self.errorlabel.set_label("Alarm is set")
-    except Exception as e:
-      print(e)
-      self.errorlabel.set_markup("<span color='red'>Error setting wake time</span>")
-    self.window.set_sensitive(True)
-    self.update()
-
-  def snooze_clicked(self, button):
-    self.alarmtime = GLib.DateTime.new_now_local().add_minutes(3)
-    self.hour.set_value(self.alarmtime.get_hour())
-    self.minute.set_value(self.alarmtime.get_minute())
-    self.second.set_value(self.alarmtime.get_second())
-    self.end_alarm()
-    self.set_alarm()
 
   def end_alarm(self):
     if self.alarm_pid != 0:
-      children = psutil.Process(pid=self.alarm_pid).children(recursive=True)
-      for child in children:
-        os.kill(child.pid, signal.SIGTERM)
-      os.kill(self.alarm_pid, signal.SIGTERM)
+      try:
+        children = psutil.Process(pid=self.alarm_pid).children(recursive=True)
+        for child in children:
+          os.kill(child.pid, signal.SIGTERM)
+        os.kill(self.alarm_pid, signal.SIGTERM)
+      except Exception as e:
+        print(e)
       self.alarm_pid = 0
 
   def stop_clicked(self, button):
-    self.disable_elements(False)
-    self.alarm_set = False
-    self.errorlabel.set_label(startmsg)
     self.end_alarm()
-    self.gen_user_timer(dummy_time)
-    check_output(["systemctl", "--user", "daemon-reload"]) # Debian package: systemd
-    check_output(["systemctl", "--user", "disable", "--now", "wake-up.timer"])
-    check_output(["set-user-alarm"])
+    self.disable_elements(False)
+    if self.setwakebutton.get_active():
+      self.enable_alarm()
     self.update()
 
-  def set_wake_clicked(self, button):
-    self.alarmtime = self.calc_wakeup_time()
-    self.prev_alarm = self.alarmtime
-    self.set_alarm()
+  def set_wake_clicked(self, button, state):
+    if state:
+      self.enable_alarm()
+    else:
+      self.disable_alarm()
 
   def disable_elements(self, val):
-    self.setwakebutton.set_sensitive(not val)
-    self.cancelbutton.set_sensitive(val)
+    self.cancelbutton.set_sensitive(False)
     self.snoozebutton.set_sensitive(False)
     self.volumeoption.set_sensitive(not val)
     self.volumescale.set_sensitive(not val)
     self.hour.set_sensitive(not val)
     self.minute.set_sensitive(not val)
-    self.second.set_sensitive(not val)
+    #self.second.set_sensitive(not val)
+    for day in range(0, 7):
+      self.days[day].set_sensitive(not val)
 
   def on_volumecheck_toggled(self, volumecheckelem):
     self.volumescale.set_sensitive(volumecheckelem.get_active())
@@ -180,28 +228,46 @@ class WakeMobile(Gtk.Application):
   def quit_cb(self, action, parameter):
     self.on_window_destroy(self.window)
 
+  def is_enabled_day_of_week(self, dow):
+    return self.days[dow%7].get_active()
+
+  def set_enabled_day_of_week(self, dow, enabled):
+    self.days[dow%7].set_active(enabled)
+
+  def is_timestamp_enabled_day_of_week(self, t):
+    return self.is_enabled_day_of_week(t.get_day_of_week())
+
   def calc_wakeup_time(self):
     hour = int(self.hour.get_value())
     minute = int(self.minute.get_value())
-    second = int(self.second.get_value())
+    second = 0 #int(self.second.get_value())
     tn = GLib.DateTime.new_now_local()
     wtime = GLib.DateTime.new_local(tn.get_year(), tn.get_month(), tn.get_day_of_month(), hour, minute, second)
     if wtime.difference(tn) < 0:
       wtime = wtime.add_days(1)
+
+    for day in range(0, 7):
+      if self.is_timestamp_enabled_day_of_week(wtime):
+        break
+      wtime = wtime.add_days(1)
+    if wtime.difference(tn.add_days(7)) > 0:
+      return None
     if wtime.difference(tn) < 0:
       raise Exception("Something went wrong with the time calculation: This should never happen!")
     return wtime
 
   def update(self):
+    label = 'Never'
     tn = GLib.DateTime.new_now_local()
     wtime = self.calc_wakeup_time()
-    total_sec_left = int(wtime.difference(tn)/1000/1000)
-    sec_left = str(int(total_sec_left % 60))
-    min_left = str((int(total_sec_left/60) % 60))
-    hours_left = str(int(total_sec_left/60/60))
-    label = hours_left + ":" + min_left + ":" + sec_left + " left"
+    if wtime:
+      total_sec_left = int(wtime.difference(tn)/1000/1000)
+      sec_left = (int(total_sec_left % 60))
+      min_left = ((int(total_sec_left/60) % 60))
+      hours_left = (int(total_sec_left/60/60))
+      label = f"{hours_left:02}:{min_left:02}:{sec_left:02} left"
     if self.alarm_pid != 0:
-      pass
+      self.lefttime.set_label("No time left")
     elif self.alarm_set:
       self.lefttime.set_label("<span color='orange'>" + label + "</span>")
     else:
@@ -224,14 +290,18 @@ ExecStart=gapplication launch org.gnome.gitlab.kailueke.WakeMobile
       prev_alarm_found = self.prev_alarm.format("%Y-%m-%d %H:%M:%S")
     else:
       prev_alarm_found = dummy_time
+    alarm_days=','.join([('1' if self.is_enabled_day_of_week(x) else '0') for x in range(0,7)])
     content = f"""[Unit]
 Description=User Wake Up Timer
 [Timer]
 Persistent=true
 AccuracySec=1us
 OnCalendar={time_arg}
+## alarm config start
 # Previous-Alarm={prev_alarm_found}
-# Wake-Mobile-Volume={volume_setting}
+# Alarm-Days={alarm_days}
+# Set-Volume={volume_setting}
+## alarm config end
 [Install]
 WantedBy=timers.target
 """

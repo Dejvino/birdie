@@ -1,0 +1,46 @@
+#!/usr/bin/env python
+
+import gi
+gi.require_version('Gst', '1.0')
+from gi.repository import GObject, Gst, GLib
+import sys
+import os
+
+soundfile = './splashes.ogg'
+volume = 0
+volume_increment = 0.03
+
+Gst.init()
+mainloop = GLib.MainLoop()
+
+pl = Gst.ElementFactory.make("playbin", "player")
+pl.set_property('uri','file://'+os.path.abspath(soundfile))
+pl.set_property('volume', volume)
+pl.set_state(Gst.State.PLAYING)
+
+def increase_volume():
+    global volume
+    volume = 1.0 if volume + volume_increment >= 1 else volume + volume_increment
+    print(f"{round(volume*100)}%")
+    pl.set_property('volume', volume)
+    return volume < 1.0
+GLib.timeout_add_seconds(1, increase_volume)
+
+def bus_call(bus, message, loop):
+    global pl
+    if message.type == Gst.MessageType.EOS:
+        pl.set_state(Gst.State.READY)
+        pl.set_state(Gst.State.PLAYING)
+    elif message.type == Gst.MessageType.ERROR:
+        err, debug = message.parse_error()
+        sys.stderr.write(f"Gst Error: {err}: {debug}\n")
+        loop.quit()
+    return True
+bus = pl.get_bus()
+bus.add_signal_watch()
+bus.connect("message", bus_call, mainloop)
+
+try:
+    mainloop.run()
+except:
+    mainloop.quit()
