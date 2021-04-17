@@ -1,26 +1,18 @@
-# Wake Mobile
+# Birdie
 
-Proof-of-concept alarm app that uses systemd timers to wake up the system
-
-The user needs to be logged in. Meant to be used with Phosh where this is always the case and where the system suspends after inactivity.
-
-A setuid helper binary is used to write systemd timer drop-in unit files for the user because only system timers can wake the system up from suspend.
+Alarm app capable of waking up the system from suspended state. Designed for Linux phones.
 
 ![Screenshot](screenshot.png)
 
-## Binary packages for Mobian/Debian
+## Features
+- system wakes up from power saving mode (suspend) to play the alarm
+- single alarm
+- alarm is repeated for selected days of the week
+- snooze button
+- pleasant wake up sound (included)
+- gradual volume increase
 
-The package is now included in the Mobian repository, please install it from there:
-
-```
-sudo apt install wake-mobile
-```
-
-Alternatively, you can download the packages [here](https://gitlab.gnome.org/kailueke/wake-mobile/-/tags/1.7).
-
-On the PinePhone download the arm64 deb and install it with `sudo apt install $(ls ./wake-mobile_*_arm64.deb | sort | tail -n 1)`.
-
-## Installation from source:
+## Install from source:
 
 ```
 # on Mobian/Debian:
@@ -31,7 +23,7 @@ make install-deb
 make install
 ```
 
-## Deinstallation:
+## Uninstall:
 
 ```
 # on Mobian/Debian:
@@ -41,5 +33,7 @@ sudo dpkg -r wake-mobile
 make uninstall
 ```
 
+# Notes
+Forked from [Wake Mobile](https://gitlab.gnome.org/kailueke/wake-mobile), a proof-of-concept alarm app that uses systemd timers to wake up the system.
 
-History: I wrote this originally for the OpenMoko where it relied on calling `rtcwake` through `pkexec` and now adapted it to show how GNOME Clocks could make use systemd timers.
+
