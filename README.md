@@ -11,6 +11,7 @@ Alarm app capable of waking up the system from suspended state. Designed for Lin
 - snooze button
 - pleasant wake up sound (included)
 - gradual volume increase
+- alarm test mode
 
 ## Install from source:
 

@@ -52,6 +52,7 @@ class WakeMobile(Gtk.Application):
     self.hour = self.builder.get_object("hour")
     self.minute = self.builder.get_object("minute")
     #self.second = self.builder.get_object("second")
+    self.dayall = self.builder.get_object("dayall")
     self.days = []
     for n in range(0, 7):
       self.days.append(self.builder.get_object(f'day{n}'))
@@ -157,6 +158,23 @@ class WakeMobile(Gtk.Application):
     self.end_alarm()
     self.set_alarm()
 
+  def all_days_toggle(self, checkbox):
+    state = self.dayall.get_active()
+    for day in range(0, 7):
+      self.set_enabled_day_of_week(day, state)
+
+  def day_toggle(self, checkbox):
+    active = 0
+    for day in range(0, 7):
+      active += 1 if self.is_enabled_day_of_week(day) else 0
+    self.dayall.set_inconsistent(False)
+    if active == 0:
+      self.dayall.set_active(False)
+    elif active == 7:
+      self.dayall.set_active(True)
+    else:
+      self.dayall.set_inconsistent(True)
+
   def test_alarm_clicked(self, button):
     self.start_alarm()
     self.snoozebutton.set_sensitive(False)
@@ -212,6 +230,7 @@ class WakeMobile(Gtk.Application):
     self.hour.set_sensitive(not val)
     self.minute.set_sensitive(not val)
     #self.second.set_sensitive(not val)
+    self.dayall.set_sensitive(not val)
     for day in range(0, 7):
       self.days[day].set_sensitive(not val)
 
