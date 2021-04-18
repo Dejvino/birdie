@@ -24,6 +24,8 @@ install: set-user-alarm
 	install -D -o root -g root -m 644 ${APP_ID}.desktop ${DESTDIR}/usr/share/applications/${APP_ID}.desktop
 	install -D -o root -g root -m 644 ${APP_ID}.service ${DESTDIR}/usr/share/dbus-1/services/${APP_ID}.service
 	install -D -o root -g root -m 644 ${APP_ID}.svg ${DESTDIR}/usr/share/icons/hicolor/scalable/apps/${APP_ID}.svg
+	touch ${DESTDIR}/usr/share/icons/hicolor
+	gtk-update-icon-cache
 
 uninstall:
 	rm /lib/systemd/system/system-wake-up.service
