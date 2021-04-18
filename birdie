@@ -29,7 +29,11 @@ USE_INHIBIT = True # requires support in the session manager
 ALARM_COMMAND = (INHIBIT_COMMAND_PREFIX if USE_INHIBIT else []) + ALARM_SOUND_COMMAND
 
 dummy_time = "0000-01-01 00:00:00"
-startmsg = "Wake your device and issue an alarm\n(You need to stay logged in)"
+MSG_START = "Pick a time and day for waking up."
+MSG_ALARM_SET = "Alarm is set!"
+MSG_WAKE_UP = "<span color='orange'>Wake up!</span>"
+MSG_SET_ALARM_ERROR = "<span color='red'>Error issuing alarm</span>"
+MSG_NO_TIME_LEFT = "No time left"
 
 class AlarmApp(Gtk.Application):
   alarm_set = False
@@ -67,7 +71,7 @@ class AlarmApp(Gtk.Application):
     self.window = self.builder.get_object("appwindow")
     self.window.set_application(self)
     self.errorlabel = self.builder.get_object("error")
-    self.errorlabel.set_label(startmsg)
+    self.errorlabel.set_label(MSG_START)
     self.setwakebutton = self.builder.get_object("setwake")
     self.cancelbutton = self.builder.get_object("cancel")
     self.snoozebutton = self.builder.get_object("snooze")
@@ -127,7 +131,7 @@ class AlarmApp(Gtk.Application):
     self.alarm_set = False
     self.end_alarm()
     self.disable_elements(False)
-    self.errorlabel.set_label(startmsg)
+    self.errorlabel.set_label(MSG_START)
     self.gen_user_timer(dummy_time)
     check_output(["systemctl", "--user", "daemon-reload"]) # Debian package: systemd
     check_output(["systemctl", "--user", "disable", "--now", "wake-up.timer"])
@@ -145,7 +149,7 @@ class AlarmApp(Gtk.Application):
         self.gen_user_service()
         self.gen_user_timer(time_var)
         self.load_user_timer()
-      self.errorlabel.set_label("Alarm is set")
+      self.errorlabel.set_label(MSG_ALARM_SET)
       print(f"Alarm set for {self.alarmtime.format('%Y-%m-%d %H:%M:%S')}")
     except Exception as e:
       print(e)
@@ -197,11 +201,11 @@ class AlarmApp(Gtk.Application):
         except Exception as e:
           print(e)
       self.alarm_pid, _, _, _ = GLib.spawn_async(ALARM_COMMAND, standard_output=-1, standard_input=-1, standard_error=-1)
-      self.errorlabel.set_label("<span color='orange'>Wake up!</span>")
-      self.lefttime.set_label("No time left")
+      self.errorlabel.set_label(MSG_WAKE_UP)
+      self.lefttime.set_label(MSG_NO_TIME_LEFT)
     except Exception as e:
       print(e)
-      self.errorlabel.set_label("<span color='red'>Error issuing alarm</span>")
+      self.errorlabel.set_label(MSG_SET_ALARM_ERROR)
 
   def end_alarm(self):
     if self.alarm_pid != 0:
@@ -291,7 +295,7 @@ class AlarmApp(Gtk.Application):
       hours_left = (int(total_sec_left/60/60))
       label = f"{hours_left:02}:{min_left:02}:{sec_left:02} left"
     if self.alarm_pid != 0:
-      self.lefttime.set_label("No time left")
+      self.lefttime.set_label(MSG_NO_TIME_LEFT)
     elif self.alarm_set:
       self.lefttime.set_label("<span color='orange'>" + label + "</span>")
     else:
