@@ -6,7 +6,7 @@ from gi.repository import GObject, Gst, GLib
 import sys
 import os
 
-soundfile = './splashes.ogg'
+soundfile = '/usr/share/birdie/splashes.ogg'
 volume = 0
 volume_increment = 0.03
 

@@ -2,6 +2,7 @@
 
 # GPL-2+ ("and any later version")
 # Kai Lüke 2020
+# Dejvino 2021
 
 import gi # Debian package: python3-gi
 gi.require_version('Gtk', '3.0')
@@ -14,19 +15,23 @@ from subprocess import check_output
 os.chdir(os.path.dirname(sys.argv[0]))
 user_folder = str(Path.home()) + "/.config/systemd/user"
 
-UI_FILE_LOCAL = "./wake-mobile.ui"
-UI_FILE_GLOBAL = "/usr/share/wake-mobile/wake-mobile.ui"
-LICENSE = Gtk.License.GPL_3_0
+APP_NAME = 'birdie'
+APP_ID = 'com.github.dejvino.birdie'
 VERSION = "0.1"
-#ALARM_APP_COMMAND = ["./play-alarm-sound"]
-ALARM_APP_COMMAND = ["/usr/bin/gnome-session-inhibit", "--inhibit", "suspend", "./play-alarm-sound"]
+LICENSE = Gtk.License.GPL_3_0
 
-SET_USER_ALARM_COMMAND = "set-user-alarm"
+UI_FILE_LOCAL = "./app.ui"
+UI_FILE_GLOBAL = f"/usr/share/{APP_NAME}/app.ui"
+SET_USER_ALARM_COMMAND = f"/usr/lib/{APP_NAME}/libexec/set-user-alarm"
+INHIBIT_COMMAND_PREFIX = ["/usr/bin/gnome-session-inhibit", "--inhibit", "suspend"]
+ALARM_SOUND_COMMAND = [f"/usr/lib/{APP_NAME}/libexec/play-alarm-sound"]
+USE_INHIBIT = True # requires support in the session manager
+ALARM_COMMAND = (INHIBIT_COMMAND_PREFIX if USE_INHIBIT else []) + ALARM_SOUND_COMMAND
 
 dummy_time = "0000-01-01 00:00:00"
 startmsg = "Wake your device and issue an alarm\n(You need to stay logged in)"
 
-class WakeMobile(Gtk.Application):
+class AlarmApp(Gtk.Application):
   alarm_set = False
   alarm_pid = 0
   prev_alarm = None
@@ -191,7 +196,7 @@ class WakeMobile(Gtk.Application):
           check_output(["pactl", "set-sink-volume", first_sink, str(int(self.volumescale.get_value()))+ "%"])
         except Exception as e:
           print(e)
-      self.alarm_pid, _, _, _ = GLib.spawn_async(ALARM_APP_COMMAND, standard_output=-1, standard_input=-1, standard_error=-1)
+      self.alarm_pid, _, _, _ = GLib.spawn_async(ALARM_COMMAND, standard_output=-1, standard_input=-1, standard_error=-1)
       self.errorlabel.set_label("<span color='orange'>Wake up!</span>")
       self.lefttime.set_label("No time left")
     except Exception as e:
@@ -297,7 +302,7 @@ class WakeMobile(Gtk.Application):
     content = f"""[Unit]
 Description=User Wake Up Action
 [Service]
-ExecStart=gapplication launch org.gnome.gitlab.kailueke.WakeMobile
+ExecStart=gapplication launch {APP_ID} 
 """
     with open(user_folder + "/wake-up.service", "w") as f:
       f.write(content)
@@ -339,6 +344,6 @@ if __name__ == "__main__":
   check_output(["pactl", "--version"]) # Debian package: pulseaudio-utils
   check_output(["canberra-gtk-play", "--version"]) # Debian package: gnome-session-canberra
   check_output(["gnome-session-inhibit", "--version"]) # Debian package: gnome-session-bin
-  app = WakeMobile("org.gnome.gitlab.kailueke.WakeMobile")
+  app = AlarmApp(APP_ID)
   exit_status = app.run(sys.argv)
   sys.exit(exit_status)

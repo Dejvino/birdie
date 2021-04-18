@@ -1,3 +1,0 @@
-[D-BUS Service]
-Name=org.gnome.gitlab.kailueke.WakeMobile
-Exec=/usr/bin/wake-mobile --gapplication-service

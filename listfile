@@ -2,8 +2,8 @@
 /lib/systemd/system/system-wake-up.timer
 /lib/systemd/system/timers.target.wants/system-wake-up.timer
 /usr/bin/set-user-alarm
-/usr/bin/wake-mobile
-/usr/share/wake-mobile/wake-mobile.ui
-/usr/share/applications/org.gnome.gitlab.kailueke.WakeMobile.desktop
-/usr/share/dbus-1/services/org.gnome.gitlab.kailueke.WakeMobile.service
-/usr/share/icons/hicolor/scalable/apps/org.gnome.gitlab.kailueke.WakeMobile.svg
+/usr/bin/birdie
+/usr/share/birdie/app.ui
+/usr/share/applications/com.github.dejvino.birdie.desktop
+/usr/share/dbus-1/services/com.github.dejvino.birdie.service
+/usr/share/icons/hicolor/scalable/apps/com.github.dejvino.birdie.svg

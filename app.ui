@@ -28,8 +28,9 @@
     <property name="can-focus">False</property>
     <property name="hexpand">True</property>
     <property name="vexpand">True</property>
-    <property name="title" translatable="yes">Wake Mobile</property>
+    <property name="title" translatable="yes">Birdie Wakeup Alarm</property>
     <property name="window-position">center</property>
+    <property name="hide-titlebar-when-maximized">True</property>
     <signal name="destroy" handler="on_window_destroy" swapped="no"/>
     <child>
       <object class="GtkBox" id="mainbox">
