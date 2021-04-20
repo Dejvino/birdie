@@ -3,7 +3,7 @@ Alarm app designed for Linux phones.
 
 Tested with PINE64 PinePhone running Phosh.
 
-![Screenshot](screenshots/default.png)
+![Screenshot](screenshots/title.png)
 
 Open [Screenshots Gallery](./screenshots/README.md) for more images.
 
