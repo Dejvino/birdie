@@ -23,10 +23,11 @@ LICENSE = Gtk.License.GPL_3_0
 UI_FILE_LOCAL = "./app.ui"
 UI_FILE_GLOBAL = f"/usr/share/{APP_NAME}/app.ui"
 SET_USER_ALARM_COMMAND = f"/usr/lib/{APP_NAME}/libexec/set-user-alarm"
-INHIBIT_COMMAND_PREFIX = ["/usr/bin/gnome-session-inhibit", "--inhibit", "suspend"]
+INHIBIT_COMMAND_PREFIX = ["/usr/bin/gnome-session-inhibit", "--inhibit", "suspend,logout,idle"]
 ALARM_SOUND_COMMAND = [f"/usr/lib/{APP_NAME}/libexec/play-alarm-sound"]
 USE_INHIBIT = True # requires support in the session manager
 ALARM_COMMAND = (INHIBIT_COMMAND_PREFIX if USE_INHIBIT else []) + ALARM_SOUND_COMMAND
+USE_MPRIS = True # requires mpris_server
 
 dummy_time = "0000-01-01 00:00:00"
 MSG_START = "Pick a time and day for waking up."
@@ -38,10 +39,17 @@ MSG_NO_TIME_LEFT = "No time left"
 class AlarmApp(Gtk.Application):
   alarm_set = False
   alarm_pid = 0
+  alarm_testing = False
   prev_alarm = None
+  event_handler = None
+  snooze_short = 3
+  snooze_long = 10
 
   def __init__(self, application_id):
     Gtk.Application.__init__(self, application_id=application_id)
+
+  def register_event_handler(self, event_handler):
+    self.event_handler = event_handler
 
   def do_startup(self):
     Gtk.Application.do_startup(self)
@@ -159,13 +167,22 @@ class AlarmApp(Gtk.Application):
     self.window.set_sensitive(True)
     self.update()
 
-  def snooze_clicked(self, button):
-    self.alarmtime = GLib.DateTime.new_now_local().add_minutes(3)
+  def do_snooze(self, snooze_time):
+    self.alarmtime = GLib.DateTime.new_now_local().add_minutes(snooze_time)
     self.hour.set_value(self.alarmtime.get_hour())
     self.minute.set_value(self.alarmtime.get_minute())
     #self.second.set_value(self.alarmtime.get_second())
     self.end_alarm()
     self.set_alarm()
+
+  def do_snooze_short(self):
+    self.do_snooze(self.snooze_short)
+
+  def do_snooze_long(self):
+    self.do_snooze(self.snooze_long)
+
+  def snooze_clicked(self, button):
+    self.do_snooze_short()
 
   def all_days_toggle(self, checkbox):
     state = self.dayall.get_active()
@@ -185,6 +202,7 @@ class AlarmApp(Gtk.Application):
       self.dayall.set_inconsistent(True)
 
   def test_alarm_clicked(self, button):
+    self.alarm_testing = True
     self.start_alarm()
     self.snoozebutton.set_sensitive(False)
 
@@ -203,6 +221,8 @@ class AlarmApp(Gtk.Application):
       self.alarm_pid, _, _, _ = GLib.spawn_async(ALARM_COMMAND, standard_output=-1, standard_input=-1, standard_error=-1)
       self.errorlabel.set_label(MSG_WAKE_UP)
       self.lefttime.set_label(MSG_NO_TIME_LEFT)
+      if self.event_handler:
+        self.event_handler.event_start()
     except Exception as e:
       print(e)
       self.errorlabel.set_label(MSG_SET_ALARM_ERROR)
@@ -217,8 +237,14 @@ class AlarmApp(Gtk.Application):
       except Exception as e:
         print(e)
       self.alarm_pid = 0
+      self.alarm_testing = False
+      if self.event_handler:
+        self.event_handler.event_stop()
 
   def stop_clicked(self, button):
+    self.do_stop()
+
+  def do_stop(self):
     self.end_alarm()
     self.disable_elements(False)
     if self.setwakebutton.get_active():
@@ -341,6 +367,137 @@ WantedBy=timers.target
     check_output(["systemctl", "--user", "enable", "wake-up.timer"])
     check_output(["systemctl", "--user", "restart", "wake-up.timer"])
 
+app = AlarmApp(APP_ID)
+
+if USE_MPRIS:
+  from mpris_server.adapters import MprisAdapter
+  from mpris_server.events import EventAdapter
+  from mpris_server.server import Server
+  from mpris_server.adapters import Metadata
+  from mpris_server.adapters import Microseconds, VolumeDecimal, PlayState, Track
+  from mpris_server.base import Artist, Album
+
+  class MyAppAdapter(MprisAdapter):
+      
+      def can_quit(self) -> bool:
+          return False
+
+      def can_raise(self) -> bool:
+          return False
+
+      def get_desktop_entry(self) -> str:
+          return "com.github.dejvino.birdie"
+
+      def can_fullscreen(self):
+          return False
+      
+      def get_current_position(self) -> Microseconds:
+          return int(0)
+
+      def resume(self):
+          pass
+
+      def pause(self):
+        if app.alarm_testing:
+          app.do_stop()
+        else:
+          app.do_snooze_short()
+
+      def play(self):
+          pass
+
+      def previous(self):
+          app.do_stop()
+
+      def next(self):
+          if app.alarm_testing:
+              app.do_stop()
+          else:
+              app.do_snooze_long()
+
+      def stop(self):
+          app.do_stop()
+
+      def get_playstate(self) -> PlayState:
+          return PlayState.PLAYING if app.alarm_pid != 0 else PlayState.STOPPED
+
+      def is_repeating(self) -> bool:
+          return False
+
+      def is_playlist(self) -> bool:
+          return False
+
+      def get_shuffle(self) -> bool:
+          return False
+
+      def get_art_url(self, track: int) -> str:
+          return f"file:///usr/share/icons/hicolor/scalable/apps/{APP_ID}.svg"
+
+      def get_volume(self) -> VolumeDecimal:
+          float(1)
+
+      def is_mute(self) -> bool:
+          return False
+
+      def can_go_next(self) -> bool:
+          return True
+
+      def can_go_previous(self) -> bool:
+          return True
+
+      def can_play(self) -> bool:
+          return True
+
+      def can_pause(self) -> bool:
+          return True
+
+      def can_seek(self) -> bool:
+          return False
+
+      def can_control(self) -> bool:
+          return True
+
+      def get_stream_title(self) -> str:
+          pass#return "Stream title"
+
+      def get_current_track(self) -> Track:
+          artist = Artist("<< Stop | Snooze | Sleep In >>")
+          album = Album(
+              name="Good Morning!",
+              artists=(artist,)
+          )
+          track = Track(
+              track_id='/default/1',
+              name="Wake up!",
+              track_no=1,
+              length=60,
+              artists=(artist,),
+              album=album
+          )
+          return track
+
+      def get_previous_track(self) -> Track:
+          pass
+
+      def get_next_track(self) -> Track:
+          pass
+
+  class MyAppEventHandler(EventAdapter):
+    def event_start(self):
+      self.on_playpause()
+      self.on_options()
+      self.on_title()
+
+    def event_stop(self):
+      self.on_playpause()
+      self.on_options()
+      self.on_ended()
+    
+  my_adapter = MyAppAdapter()
+  mpris = Server(name=APP_NAME, adapter=my_adapter)
+  mpris.publish()
+  event_handler = MyAppEventHandler(root=mpris.root, player=mpris.player)
+  app.register_event_handler(event_handler)
 
 if __name__ == "__main__":
   check_output(["mkdir", "-p", user_folder])
@@ -348,6 +505,5 @@ if __name__ == "__main__":
   check_output(["pactl", "--version"]) # Debian package: pulseaudio-utils
   check_output(["canberra-gtk-play", "--version"]) # Debian package: gnome-session-canberra
   check_output(["gnome-session-inhibit", "--version"]) # Debian package: gnome-session-bin
-  app = AlarmApp(APP_ID)
   exit_status = app.run(sys.argv)
   sys.exit(exit_status)

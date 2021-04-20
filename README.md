@@ -1,19 +1,23 @@
 # Birdie
+Alarm app designed for Linux phones.
 
-![Logo](com.github.dejvino.birdie.png)
+Tested with PINE64 PinePhone running Phosh.
 
-Alarm app capable of waking up the system from suspended state. Designed for Linux phones.
+![Screenshot](screenshots/default.png)
 
-![Screenshot](screenshot.png)
+Open [Screenshots Gallery](./screenshots/README.md) for more images.
 
 ## Features
 - system wakes up from power saving mode (suspend) to play the alarm
-- single alarm
+- single alarm schedule
 - alarm is repeated for selected days of the week
 - snooze button
 - pleasant wake up sound (included)
-- gradual volume increase
+- gradual volume increase of the alarm
 - alarm test mode
+- alarm accessible from a lockscreen (via MPRIS)
+
+![Logo](com.github.dejvino.birdie.png)
 
 ## Install from source:
 
@@ -23,8 +27,11 @@ sudo apt install gcc make checkinstall
 make install-deb
 
 # or generic:
+pip3 install mpris_server
 make install
 ```
+
+See [mpris_server](https://github.com/alexdelorenzo/mpris_server) for installation details. Or disable it in `birdie` via `USE_MPRIS = False`.
 
 ## Uninstall:
 
@@ -41,3 +48,4 @@ Forked from [Wake Mobile](https://gitlab.gnome.org/kailueke/wake-mobile), a proo
 
 Logo icon adapted from [freesvg.org #1](https://freesvg.org/1526107263) and [freesvg.org #2](https://freesvg.org/1552814098) (Public Domain).
 
+Alarm sound is a custom recording, released into Public Domain.

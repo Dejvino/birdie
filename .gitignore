@@ -1,3 +1,4 @@
 set-user-alarm
-wake-mobile_*.deb
+*.deb
 description-pak
+*.ui~
