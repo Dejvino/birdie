@@ -27,11 +27,9 @@ sudo apt install gcc make checkinstall
 make install-deb
 
 # or generic:
-pip3 install mpris_server
-make install
+pip3 install -r requirements.txt
+sudo make install
 ```
-
-See [mpris_server](https://github.com/alexdelorenzo/mpris_server) for installation details. Or disable it in `birdie` via `USE_MPRIS = False`.
 
 ## Uninstall:
 
