@@ -37,6 +37,7 @@ MSG_SET_ALARM_ERROR = "<span color='red'>Error issuing alarm</span>"
 MSG_NO_TIME_LEFT = "No time left"
 
 class AlarmApp(Gtk.Application):
+  alarmtime = None
   alarm_set = False
   alarm_pid = 0
   alarm_testing = False
@@ -89,22 +90,16 @@ class AlarmApp(Gtk.Application):
         content = f.read()
       time_var = content.split("OnCalendar=")[1].split("\n")[0]
       if time_var != dummy_time:
-        self.alarmtime = GLib.DateTime.new_from_iso8601(time_var, default_tz=GLib.TimeZone.new_local())
-        self.prev_alarm = self.alarmtime
-        self.hour.set_value(self.alarmtime.get_hour())
-        self.minute.set_value(self.alarmtime.get_minute())
-        #self.second.set_value(self.alarmtime.get_second())
+        self.set_alarm_time(GLib.DateTime.new_from_iso8601(time_var, default_tz=GLib.TimeZone.new_local()))
         self.setwakebutton.set_active(True)
         self.set_alarm(rewrite=False)
-      else:
-        try:
-          prev_alarm_found = content.split("Previous-Alarm=")[1].split("\n")[0]
-          self.prev_alarm = GLib.DateTime.new_from_iso8601(prev_alarm_found, default_tz=GLib.TimeZone.new_local())
-          self.hour.set_value(self.prev_alarm.get_hour())
-          self.minute.set_value(self.prev_alarm.get_minute())
-          #self.second.set_value(self.prev_alarm.get_second())
-        except Exception as e:
-          print(e)
+      try:
+        prev_alarm_found = content.split("Previous-Alarm=")[1].split("\n")[0]
+        self.prev_alarm = GLib.DateTime.new_from_iso8601(prev_alarm_found, default_tz=GLib.TimeZone.new_local())
+        if self.alarmtime is None:
+          self.set_alarm_time(self.prev_alarm)
+      except Exception as e:
+        print(e)
       alarm_days = content.split("Alarm-Days=")[1].split("\n")[0].split(',')
       if len(alarm_days) == 7:
         for day in range(0, 7):
@@ -167,11 +162,14 @@ class AlarmApp(Gtk.Application):
     self.window.set_sensitive(True)
     self.update()
 
-  def do_snooze(self, snooze_time):
-    self.alarmtime = GLib.DateTime.new_now_local().add_minutes(snooze_time)
+  def set_alarm_time(self, alarm_time):
+    self.alarmtime = alarm_time
     self.hour.set_value(self.alarmtime.get_hour())
     self.minute.set_value(self.alarmtime.get_minute())
     #self.second.set_value(self.alarmtime.get_second())
+
+  def do_snooze(self, snooze_time):
+    self.set_alarm_time(GLib.DateTime.new_now_local().add_minutes(snooze_time))
     self.end_alarm()
     self.set_alarm()
 
@@ -245,8 +243,12 @@ class AlarmApp(Gtk.Application):
     self.do_stop()
 
   def do_stop(self):
+    was_testing = self.alarm_testing
     self.end_alarm()
     self.disable_elements(False)
+    if self.prev_alarm is not None and not was_testing:
+      # restore the initial alarm time after snoozing
+      self.set_alarm_time(self.prev_alarm)
     if self.setwakebutton.get_active():
       self.enable_alarm()
     self.update()
