@@ -22,9 +22,14 @@ Open [Screenshots Gallery](./screenshots/README.md) for more images.
 ## Install from source:
 
 ```
+# get the source
+git clone https://github.com/Dejvino/birdie.git
+cd birdie
+
 # on Mobian/Debian:
-sudo apt install gcc make checkinstall
-make install-deb
+sudo apt install gcc make checkinstall python3-psutil python3-pip
+sudo pip install mpris-server
+sudo make install-deb
 
 # or generic:
 pip3 install -r requirements.txt

@@ -14,6 +14,9 @@ check: set-user-alarm.c
 
 install: set-user-alarm
 	ls -lah ${DESTDIR}
+	mkdir -p ${DESTDIR}/usr/lib/${APP_NAME}
+	mkdir -p ${DESTDIR}/usr/lib/${APP_NAME}/libexec
+	mkdir -p ${DESTDIR}/usr/share/${APP_NAME}
 	install -D -o root -g root -m 644 system-wake-up.service ${DESTDIR}/lib/systemd/system/system-wake-up.service
 	install -D -o root -g root -m 644 system-wake-up.timer ${DESTDIR}/lib/systemd/system/system-wake-up.timer
 	install -D -o root -g root -m 4755 set-user-alarm ${DESTDIR}/usr/lib/${APP_NAME}/libexec/set-user-alarm
@@ -43,4 +46,4 @@ clean:
 	rm -f set-user-alarm
 
 install-deb: set-user-alarm
-	checkinstall "--requires=systemd, pulseaudio-utils, gnome-session-canberra, libglib2.0-bin, python3-psutil, python3-gi, gir1.2-glib-2.0, gir1.2-gtk-3.0" --pkgname=${APP_NAME} --pkglicense=GPL-2+ --nodoc --pkgversion=1.7 --pkgrelease=0 --include=listfile --deldesc=yes --backup=no -y
+	checkinstall "--requires=systemd, pulseaudio-utils, libglib2.0-bin, python3-psutil, python3-gi, gir1.2-glib-2.0, gir1.2-gtk-3.0" --pkgname=${APP_NAME} --pkglicense=GPL-2+ --nodoc --pkgversion=1.7 --pkgrelease=0 --include=listfile --deldesc=yes --backup=no -y

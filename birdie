@@ -505,7 +505,6 @@ if __name__ == "__main__":
   check_output(["mkdir", "-p", user_folder])
   check_output(["gapplication"]) # Debian package: libglib2.0-bin
   check_output(["pactl", "--version"]) # Debian package: pulseaudio-utils
-  check_output(["canberra-gtk-play", "--version"]) # Debian package: gnome-session-canberra
   check_output(["gnome-session-inhibit", "--version"]) # Debian package: gnome-session-bin
   exit_status = app.run(sys.argv)
   sys.exit(exit_status)
