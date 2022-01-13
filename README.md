@@ -31,6 +31,9 @@ sudo apt install gcc make checkinstall python3-psutil python3-pip
 sudo pip install mpris-server
 sudo make install-deb
 
+# on Archlinux
+paru birdie-alarm-moblie-git
+
 # or generic:
 pip3 install -r requirements.txt
 sudo make install
@@ -41,6 +44,9 @@ sudo make install
 ```
 # on Mobian/Debian:
 sudo dpkg -r birdie
+
+# on Archlinux
+pacman -R birdie-alarm-moblie-git
 
 # or generic:
 make uninstall
