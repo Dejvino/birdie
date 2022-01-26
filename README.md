@@ -19,6 +19,16 @@ Open [Screenshots Gallery](./screenshots/README.md) for more images.
 
 ![Logo](com.github.dejvino.birdie.png)
 
+## Install
+
+### Arch Linux
+
+Available on [AUR](https://aur.archlinux.org/) as [birdie-alarm-mobile-git](https://aur.archlinux.org/packages/birdie-alarm-mobile-git/). Use your AUR wrapper of choice, e.g.:
+
+```
+yay -S birdie-alarm-mobile-git
+```
+
 ## Install from source:
 
 ```
