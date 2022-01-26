@@ -31,6 +31,11 @@ sudo apt install gcc make checkinstall python3-psutil python3-pip
 sudo pip install mpris-server
 sudo make install-deb
 
+# on Arch:
+sudo pacman -S gst-plugins-base gst-plugins-good
+pip3 install -r requirements.txt
+sudo make install
+
 # or generic:
 pip3 install -r requirements.txt
 sudo make install
