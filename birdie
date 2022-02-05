@@ -2,12 +2,13 @@
 
 # GPL-2+ ("and any later version")
 # Kai Lüke 2020
-# Dejvino 2021
+# Dejvino 2021-2022
 
 import gi # Debian package: python3-gi
 gi.require_version('Gtk', '3.0')
 from gi.repository import Gtk, Gio, GLib # Debian package: gir1.2-glib-2.0, gir1.2-gtk-3.0
-import os, sys, signal, psutil # Debian package: python3-psutil
+import os, sys, signal
+from subprocess import Popen, PIPE
 from pathlib import Path
 
 from subprocess import check_output
@@ -17,33 +18,44 @@ user_folder = str(Path.home()) + "/.config/systemd/user"
 
 APP_NAME = 'birdie'
 APP_ID = 'com.github.dejvino.birdie'
-VERSION = "0.1"
+VERSION = "0.2"
 LICENSE = Gtk.License.GPL_3_0
 
 UI_FILE_LOCAL = "./app.ui"
 UI_FILE_GLOBAL = f"/usr/share/{APP_NAME}/app.ui"
-SET_USER_ALARM_COMMAND = f"/usr/lib/{APP_NAME}/libexec/set-user-alarm"
+SET_USER_ALARM_COMMAND_LOCAL = "./set-user-alarm"
+SET_USER_ALARM_COMMAND_GLOBAL = f"/usr/lib/{APP_NAME}/libexec/set-user-alarm"
 INHIBIT_COMMAND_PREFIX = ["/usr/bin/gnome-session-inhibit", "--inhibit", "suspend,logout,idle"]
 ALARM_SOUND_COMMAND = [f"/usr/lib/{APP_NAME}/libexec/play-alarm-sound"]
-USE_INHIBIT = True # requires support in the session manager
-ALARM_COMMAND = (INHIBIT_COMMAND_PREFIX if USE_INHIBIT else []) + ALARM_SOUND_COMMAND
 USE_MPRIS = True # requires mpris_server
 
 dummy_time = "0000-01-01 00:00:00"
 MSG_START = "Pick a time and day for waking up."
 MSG_ALARM_SET = "Alarm is set!"
 MSG_WAKE_UP = "<span color='orange'>Wake up!</span>"
-MSG_SET_ALARM_ERROR = "<span color='red'>Error issuing alarm</span>"
+MSG_SET_ALARM_ERROR = "<span color='red'>Error issuing alarm, check console.</span>"
+MSG_PLAY_ALARM_ERROR = "<span color='red'>Error playing alarm, check console.</span>"
 MSG_NO_TIME_LEFT = "No time left"
+
+def showErrorDialog(text, title=None, parent=None):
+    dialog = Gtk.MessageDialog(
+          transient_for=parent,
+          flags=0,
+          message_type=Gtk.MessageType.ERROR,
+          buttons=Gtk.ButtonsType.CLOSE,
+          text=text,
+          title=(APP_NAME + " :: " + (title if title is not None else "Error"))
+        )
+    return dialog.run()
 
 class AlarmApp(Gtk.Application):
   alarmtime = None
   alarm_set = False
-  alarm_pid = 0
+  alarm_proc = 0
   alarm_testing = False
   prev_alarm = None
   event_handler = None
-  snooze_short = 3
+  snooze_short = 5
   snooze_long = 10
 
   def __init__(self, application_id):
@@ -79,6 +91,7 @@ class AlarmApp(Gtk.Application):
     self.soundvolume = self.builder.get_object("soundvolume")
     self.window = self.builder.get_object("appwindow")
     self.window.set_application(self)
+    self.mainbox = self.builder.get_object("mainbox")
     self.errorlabel = self.builder.get_object("error")
     self.errorlabel.set_label(MSG_START)
     self.setwakebutton = self.builder.get_object("setwake")
@@ -148,7 +161,10 @@ class AlarmApp(Gtk.Application):
     try:
       if rewrite:
         time_var = self.alarmtime.format("%Y-%m-%d %H:%M:%S")
-        check_output([SET_USER_ALARM_COMMAND, time_var])
+        if os.path.isfile(SET_USER_ALARM_COMMAND_LOCAL):
+          check_output([SET_USER_ALARM_COMMAND_LOCAL, time_var])
+        else:
+          check_output([SET_USER_ALARM_COMMAND_GLOBAL, time_var])
         self.gen_user_service()
         self.gen_user_timer(time_var)
         self.load_user_timer()
@@ -156,7 +172,7 @@ class AlarmApp(Gtk.Application):
       print(f"Alarm set for {self.alarmtime.format('%Y-%m-%d %H:%M:%S')}")
     except Exception as e:
       print(e)
-      self.errorlabel.set_markup("<span color='red'>Error setting wake time. Check console log.</span>")
+      self.errorlabel.set_markup(MSG_SET_ALARM_ERROR)
       self.alarm_set = False
       self.disable_elements(False)
     self.window.set_sensitive(True)
@@ -182,6 +198,14 @@ class AlarmApp(Gtk.Application):
   def snooze_clicked(self, button):
     self.do_snooze_short()
 
+
+  def time_changed_text(self, input):
+    # read uncommitted value?
+    pass
+
+  def time_changed(self, input):
+    self.update()
+
   def all_days_toggle(self, checkbox):
     state = self.dayall.get_active()
     for day in range(0, 7):
@@ -198,8 +222,11 @@ class AlarmApp(Gtk.Application):
       self.dayall.set_active(True)
     else:
       self.dayall.set_inconsistent(True)
+    self.update()
 
   def test_alarm_clicked(self, button):
+    if self.alarm_testing:
+      return
     self.alarm_testing = True
     self.start_alarm()
     self.snoozebutton.set_sensitive(False)
@@ -216,25 +243,25 @@ class AlarmApp(Gtk.Application):
           check_output(["pactl", "set-sink-volume", first_sink, str(int(self.volumescale.get_value()))+ "%"])
         except Exception as e:
           print(e)
-      self.alarm_pid, _, _, _ = GLib.spawn_async(ALARM_COMMAND, standard_output=-1, standard_input=-1, standard_error=-1)
+      print("Spawning alarm sound app")
+      self.alarm_proc = Popen((INHIBIT_COMMAND_PREFIX if USE_INHIBIT else []) + ALARM_SOUND_COMMAND)
       self.errorlabel.set_label(MSG_WAKE_UP)
       self.lefttime.set_label(MSG_NO_TIME_LEFT)
       if self.event_handler:
         self.event_handler.event_start()
     except Exception as e:
       print(e)
-      self.errorlabel.set_label(MSG_SET_ALARM_ERROR)
+      self.errorlabel.set_label(MSG_PLAY_ALARM_ERROR)
 
   def end_alarm(self):
-    if self.alarm_pid != 0:
+    if self.alarm_proc != 0:
       try:
-        children = psutil.Process(pid=self.alarm_pid).children(recursive=True)
-        for child in children:
-          os.kill(child.pid, signal.SIGTERM)
-        os.kill(self.alarm_pid, signal.SIGTERM)
+        print("Terminating alarm sound app")
+        self.alarm_proc.terminate()
+        self.errorlabel.set_label(MSG_START)
       except Exception as e:
         print(e)
-      self.alarm_pid = 0
+      self.alarm_proc = 0
       self.alarm_testing = False
       if self.event_handler:
         self.event_handler.event_stop()
@@ -281,6 +308,9 @@ class AlarmApp(Gtk.Application):
     self.end_alarm()
     self.quit()
 
+  def on_resize(self, window):
+    self.update_layout()
+
   def quit_cb(self, action, parameter):
     self.on_window_destroy(self.window)
 
@@ -322,12 +352,18 @@ class AlarmApp(Gtk.Application):
       min_left = ((int(total_sec_left/60) % 60))
       hours_left = (int(total_sec_left/60/60))
       label = f"{hours_left:02}:{min_left:02}:{sec_left:02} left"
-    if self.alarm_pid != 0:
+    if self.alarm_proc != 0:
       self.lefttime.set_label(MSG_NO_TIME_LEFT)
     elif self.alarm_set:
       self.lefttime.set_label("<span color='orange'>" + label + "</span>")
     else:
       self.lefttime.set_label(label)
+
+  def update_layout(self):
+    wsize = self.window.get_size()
+    target_orientation = Gtk.Orientation.VERTICAL if wsize.width < wsize.height else Gtk.Orientation.HORIZONTAL
+    if (self.mainbox.get_orientation() != target_orientation):
+      self.mainbox.set_orientation(target_orientation)
 
   def gen_user_service(self):
     p = os.path.realpath(__file__)
@@ -421,7 +457,7 @@ if USE_MPRIS:
           app.do_stop()
 
       def get_playstate(self) -> PlayState:
-          return PlayState.PLAYING if app.alarm_pid != 0 else PlayState.STOPPED
+          return PlayState.PLAYING if app.alarm_proc != 0 else PlayState.STOPPED
 
       def is_repeating(self) -> bool:
           return False
@@ -501,10 +537,37 @@ if USE_MPRIS:
   event_handler = MyAppEventHandler(root=mpris.root, player=mpris.player)
   app.register_event_handler(event_handler)
 
+def runSanityCheck(command, message, details=None):
+  try:
+    check_output(command)
+  except Exception as e:
+    print("\nSanity check Failed!")
+    print("Command executed: ", command)
+    print("Error received: ", e)
+    print()
+    print(message)
+    if details != None:
+      print(details)
+    showErrorDialog(f"{message}\n\nCheck console output for details.", title="Sanity Check Failed")
+    sys.exit(1)
+
 if __name__ == "__main__":
-  check_output(["mkdir", "-p", user_folder])
-  check_output(["gapplication"]) # Debian package: libglib2.0-bin
-  check_output(["pactl", "--version"]) # Debian package: pulseaudio-utils
-  check_output(["gnome-session-inhibit", "--version"]) # Debian package: gnome-session-bin
+  runSanityCheck(["mkdir", "-p", user_folder],
+    "Couldn't create configuration directory.")
+  runSanityCheck(["gapplication"],
+    "Install missing packages for Gtk.",
+    " Debian: libglib2.0-bin")
+  runSanityCheck(["pactl", "--version"],
+    "Install missing packages for PulseAudio.",
+    " Debian: pulseaudio-utils")
+  runSanityCheck(["gnome-session-inhibit", "--version"],
+    "Install missing packages for Gnome Session.",
+    " Debian: gnome-session-bin")
+  try:
+    check_output(["gnome-session-inhibit", "--inhibit", "suspend", "/bin/pwd"])
+  except Exception as e:
+    print("NOTICE: Gnome Session Inhibit is not supported by the environment.")
+    print("Alarm will not be able to keep the system from suspending!")
+    USE_INHIBIT = False
   exit_status = app.run(sys.argv)
   sys.exit(exit_status)

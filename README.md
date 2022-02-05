@@ -16,6 +16,7 @@ Open [Screenshots Gallery](./screenshots/README.md) for more images.
 - gradual volume increase of the alarm
 - alarm test mode
 - alarm accessible from a lockscreen (via MPRIS)
+- landscape and portrait mode layouts
 
 ![Logo](com.github.dejvino.birdie.png)
 
@@ -37,12 +38,12 @@ git clone https://github.com/Dejvino/birdie.git
 cd birdie
 
 # on Mobian/Debian:
-sudo apt install gcc make checkinstall python3-psutil python3-pip
+sudo apt install gcc make checkinstall python3-pip
 sudo pip install mpris-server
 sudo make install-deb
 
 # on Arch:
-sudo pacman -S gst-plugins-base gst-plugins-good
+sudo pacman -S gst-plugins-base gst-plugins-good python-pip
 pip3 install -r requirements.txt
 sudo make install
 
