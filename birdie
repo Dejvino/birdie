@@ -46,6 +46,7 @@ def showErrorDialog(text, title=None, parent=None):
           text=text,
           title=(APP_NAME + " :: " + (title if title is not None else "Error"))
         )
+    print(f"Error dialog: {text}")
     return dialog.run()
 
 class AlarmApp(Gtk.Application):
@@ -408,6 +409,11 @@ WantedBy=timers.target
 app = AlarmApp(APP_ID)
 
 if USE_MPRIS:
+  try:
+    import mpris_server
+  except ModuleNotFoundError:
+    showErrorDialog("mpris_server module is missing. Did you install dependencies?")
+    sys.exit(1)
   from mpris_server.adapters import MprisAdapter
   from mpris_server.events import EventAdapter
   from mpris_server.server import Server
