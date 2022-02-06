@@ -8,3 +8,4 @@ Terminal=false
 Type=Application
 Categories=GNOME;GTK;Utility;Clock;
 StartupNotify=true
+X-Purism-FormFactor=Workstation;Mobile;
