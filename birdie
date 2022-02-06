@@ -8,6 +8,7 @@ import gi # Debian package: python3-gi
 gi.require_version('Gtk', '3.0')
 from gi.repository import Gtk, Gio, GLib # Debian package: gir1.2-glib-2.0, gir1.2-gtk-3.0
 import os, sys, signal
+import psutil # Debian package: python3-psutil
 from subprocess import Popen, PIPE
 from pathlib import Path
 
@@ -27,7 +28,8 @@ SET_USER_ALARM_COMMAND_LOCAL = "./set-user-alarm"
 SET_USER_ALARM_COMMAND_GLOBAL = f"/usr/lib/{APP_NAME}/libexec/set-user-alarm"
 INHIBIT_COMMAND_PREFIX = ["/usr/bin/gnome-session-inhibit", "--inhibit", "suspend,logout,idle"]
 ALARM_SOUND_COMMAND = [f"/usr/lib/{APP_NAME}/libexec/play-alarm-sound"]
-USE_MPRIS = True # requires mpris_server
+USE_MPRIS = True # requires mpris_server module, gets checked on module load
+USE_INHIBIT = True # requires session manager support, gets checked on startup
 
 dummy_time = "0000-01-01 00:00:00"
 MSG_START = "Pick a time and day for waking up."
@@ -36,6 +38,7 @@ MSG_WAKE_UP = "<span color='orange'>Wake up!</span>"
 MSG_SET_ALARM_ERROR = "<span color='red'>Error issuing alarm, check console.</span>"
 MSG_PLAY_ALARM_ERROR = "<span color='red'>Error playing alarm, check console.</span>"
 MSG_NO_TIME_LEFT = "No time left"
+MSG_SCHEDULING_ALARM = "<span color='gray'>Scheduling alarm...</span>"
 
 def showErrorDialog(text, title=None, parent=None):
     dialog = Gtk.MessageDialog(
@@ -98,6 +101,7 @@ class AlarmApp(Gtk.Application):
     self.setwakebutton = self.builder.get_object("setwake")
     self.cancelbutton = self.builder.get_object("cancel")
     self.snoozebutton = self.builder.get_object("snooze")
+    self.update_layout()
     self.window.show_all()
     try:
       with open(user_folder + "/wake-up.timer", "r") as f:
@@ -150,22 +154,23 @@ class AlarmApp(Gtk.Application):
     self.disable_elements(False)
     self.errorlabel.set_label(MSG_START)
     self.gen_user_timer(dummy_time)
+    print("Disabling alarm service")
     check_output(["systemctl", "--user", "daemon-reload"]) # Debian package: systemd
     check_output(["systemctl", "--user", "disable", "--now", "wake-up.timer"])
-    check_output(["set-user-alarm"])
+    self.run_set_user_alarm()
     self.update()
 
   def set_alarm(self, rewrite=True):
     self.alarm_set = True
     self.window.set_sensitive(False)
     self.disable_elements(True)
+    self.errorlabel.set_markup(MSG_SCHEDULING_ALARM)
+    # TODO: spawn as async task
+    print("Enabling alarm service")
     try:
       if rewrite:
         time_var = self.alarmtime.format("%Y-%m-%d %H:%M:%S")
-        if os.path.isfile(SET_USER_ALARM_COMMAND_LOCAL):
-          check_output([SET_USER_ALARM_COMMAND_LOCAL, time_var])
-        else:
-          check_output([SET_USER_ALARM_COMMAND_GLOBAL, time_var])
+        self.run_set_user_alarm([time_var])
         self.gen_user_service()
         self.gen_user_timer(time_var)
         self.load_user_timer()
@@ -185,6 +190,12 @@ class AlarmApp(Gtk.Application):
     self.minute.set_value(self.alarmtime.get_minute())
     #self.second.set_value(self.alarmtime.get_second())
 
+  def run_set_user_alarm(self, params=[]):
+    if os.path.isfile(SET_USER_ALARM_COMMAND_LOCAL):
+      check_output([SET_USER_ALARM_COMMAND_LOCAL] + params)
+    else:
+      check_output([SET_USER_ALARM_COMMAND_GLOBAL] + params)
+
   def do_snooze(self, snooze_time):
     self.set_alarm_time(GLib.DateTime.new_now_local().add_minutes(snooze_time))
     self.end_alarm()
@@ -198,7 +209,6 @@ class AlarmApp(Gtk.Application):
 
   def snooze_clicked(self, button):
     self.do_snooze_short()
-
 
   def time_changed_text(self, input):
     # read uncommitted value?
@@ -258,6 +268,9 @@ class AlarmApp(Gtk.Application):
     if self.alarm_proc != 0:
       try:
         print("Terminating alarm sound app")
+        children = psutil.Process(pid=self.alarm_proc.pid).children(recursive=True)
+        for child in children:
+          os.kill(child.pid, signal.SIGTERM)
         self.alarm_proc.terminate()
         self.errorlabel.set_label(MSG_START)
       except Exception as e:

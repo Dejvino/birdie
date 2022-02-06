@@ -43,6 +43,7 @@
         <property name="margin-bottom">5</property>
         <property name="hexpand">True</property>
         <property name="vexpand">True</property>
+        <property name="orientation">vertical</property>
         <child>
           <object class="GtkBox">
             <property name="visible">True</property>
@@ -55,7 +56,6 @@
                 <property name="visible">True</property>
                 <property name="can-focus">False</property>
                 <property name="valign">start</property>
-                <property name="margin-bottom">10</property>
                 <property name="hexpand">True</property>
                 <property name="vexpand">False</property>
                 <child>
@@ -91,10 +91,7 @@
                         <property name="visible">True</property>
                         <property name="can-focus">False</property>
                         <property name="halign">start</property>
-                        <property name="margin-start">2</property>
-                        <property name="margin-end">2</property>
                         <property name="hexpand">False</property>
-                        <property name="xpad">4</property>
                         <property name="label" translatable="yes">Scheduled</property>
                         <property name="justify">right</property>
                       </object>
@@ -121,13 +118,15 @@
                         <property name="visible">True</property>
                         <property name="can-focus">False</property>
                         <property name="halign">end</property>
+                        <property name="margin-start">4</property>
                         <property name="hexpand">True</property>
                         <property name="label" translatable="yes">Sample status text sdfsfsdfsdfasdf asfdsadf</property>
                         <property name="use-markup">True</property>
                         <property name="justify">right</property>
-                        <property name="ellipsize">end</property>
-                        <property name="width-chars">30</property>
-                        <property name="max-width-chars">60</property>
+                        <property name="wrap">True</property>
+                        <property name="width-chars">10</property>
+                        <property name="max-width-chars">15</property>
+                        <property name="track-visited-links">False</property>
                       </object>
                       <packing>
                         <property name="expand">False</property>
@@ -141,7 +140,7 @@
                         <property name="visible">True</property>
                         <property name="can-focus">False</property>
                         <property name="halign">end</property>
-                        <property name="pixel-size">85</property>
+                        <property name="pixel-size">75</property>
                         <property name="icon-name">com.github.dejvino.birdie</property>
                         <property name="icon_size">6</property>
                       </object>
@@ -171,7 +170,7 @@
               <object class="GtkBox">
                 <property name="visible">True</property>
                 <property name="can-focus">False</property>
-                <property name="orientation">vertical</property>
+                <property name="homogeneous">True</property>
                 <child>
                   <object class="GtkLabel" id="lefttime">
                     <property name="visible">True</property>
@@ -192,6 +191,83 @@
                     <property name="position">0</property>
                   </packing>
                 </child>
+                <child>
+                  <object class="GtkBox" id="timebox">
+                    <property name="visible">True</property>
+                    <property name="can-focus">False</property>
+                    <property name="halign">center</property>
+                    <property name="valign">center</property>
+                    <property name="margin-top">10</property>
+                    <property name="margin-bottom">10</property>
+                    <property name="hexpand">True</property>
+                    <property name="vexpand">False</property>
+                    <child>
+                      <object class="GtkSpinButton" id="hour">
+                        <property name="visible">True</property>
+                        <property name="can-focus">True</property>
+                        <property name="max-length">2</property>
+                        <property name="invisible-char">•</property>
+                        <property name="width-chars">2</property>
+                        <property name="max-width-chars">2</property>
+                        <property name="input-purpose">digits</property>
+                        <property name="orientation">vertical</property>
+                        <property name="adjustment">hours</property>
+                        <property name="climb-rate">1</property>
+                        <property name="numeric">True</property>
+                        <signal name="changed" handler="time_changed_text" swapped="no"/>
+                        <signal name="value-changed" handler="time_changed" swapped="no"/>
+                      </object>
+                      <packing>
+                        <property name="expand">False</property>
+                        <property name="fill">False</property>
+                        <property name="padding">6</property>
+                        <property name="position">0</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkLabel" id="dim1">
+                        <property name="visible">True</property>
+                        <property name="can-focus">False</property>
+                        <property name="xpad">5</property>
+                        <property name="label">:</property>
+                      </object>
+                      <packing>
+                        <property name="expand">False</property>
+                        <property name="fill">True</property>
+                        <property name="position">1</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkSpinButton" id="minute">
+                        <property name="visible">True</property>
+                        <property name="can-focus">True</property>
+                        <property name="max-length">2</property>
+                        <property name="invisible-char">•</property>
+                        <property name="width-chars">2</property>
+                        <property name="max-width-chars">2</property>
+                        <property name="progress-pulse-step">1</property>
+                        <property name="input-purpose">digits</property>
+                        <property name="orientation">vertical</property>
+                        <property name="adjustment">minutes</property>
+                        <property name="climb-rate">1</property>
+                        <property name="numeric">True</property>
+                        <signal name="changed" handler="time_changed_text" swapped="no"/>
+                        <signal name="value-changed" handler="time_changed" swapped="no"/>
+                      </object>
+                      <packing>
+                        <property name="expand">False</property>
+                        <property name="fill">False</property>
+                        <property name="padding">5</property>
+                        <property name="position">2</property>
+                      </packing>
+                    </child>
+                  </object>
+                  <packing>
+                    <property name="expand">False</property>
+                    <property name="fill">False</property>
+                    <property name="position">1</property>
+                  </packing>
+                </child>
               </object>
               <packing>
                 <property name="expand">False</property>
@@ -201,93 +277,17 @@
               </packing>
             </child>
             <child>
-              <object class="GtkBox" id="timebox">
-                <property name="visible">True</property>
-                <property name="can-focus">False</property>
-                <property name="halign">center</property>
-                <property name="valign">center</property>
-                <property name="margin-top">10</property>
-                <property name="margin-bottom">10</property>
-                <property name="hexpand">True</property>
-                <property name="vexpand">False</property>
-                <child>
-                  <object class="GtkSpinButton" id="hour">
-                    <property name="visible">True</property>
-                    <property name="can-focus">True</property>
-                    <property name="max-length">2</property>
-                    <property name="invisible-char">•</property>
-                    <property name="width-chars">2</property>
-                    <property name="input-purpose">digits</property>
-                    <property name="orientation">vertical</property>
-                    <property name="adjustment">hours</property>
-                    <property name="climb-rate">1</property>
-                    <property name="numeric">True</property>
-                    <signal name="changed" handler="time_changed_text" swapped="no"/>
-                    <signal name="value-changed" handler="time_changed" swapped="no"/>
-                  </object>
-                  <packing>
-                    <property name="expand">False</property>
-                    <property name="fill">False</property>
-                    <property name="padding">6</property>
-                    <property name="position">0</property>
-                  </packing>
-                </child>
-                <child>
-                  <object class="GtkLabel" id="dim1">
-                    <property name="visible">True</property>
-                    <property name="can-focus">False</property>
-                    <property name="xpad">5</property>
-                    <property name="label">:</property>
-                  </object>
-                  <packing>
-                    <property name="expand">False</property>
-                    <property name="fill">True</property>
-                    <property name="position">1</property>
-                  </packing>
-                </child>
-                <child>
-                  <object class="GtkSpinButton" id="minute">
-                    <property name="visible">True</property>
-                    <property name="can-focus">True</property>
-                    <property name="max-length">2</property>
-                    <property name="invisible-char">•</property>
-                    <property name="width-chars">2</property>
-                    <property name="progress-pulse-step">1</property>
-                    <property name="input-purpose">digits</property>
-                    <property name="orientation">vertical</property>
-                    <property name="adjustment">minutes</property>
-                    <property name="climb-rate">1</property>
-                    <property name="numeric">True</property>
-                    <signal name="changed" handler="time_changed_text" swapped="no"/>
-                    <signal name="value-changed" handler="time_changed" swapped="no"/>
-                  </object>
-                  <packing>
-                    <property name="expand">False</property>
-                    <property name="fill">False</property>
-                    <property name="padding">5</property>
-                    <property name="position">2</property>
-                  </packing>
-                </child>
-              </object>
-              <packing>
-                <property name="expand">False</property>
-                <property name="fill">False</property>
-                <property name="position">2</property>
-              </packing>
-            </child>
-            <child>
-              <!-- n-columns=3 n-rows=3 -->
+              <!-- n-columns=4 n-rows=2 -->
               <object class="GtkGrid">
                 <property name="visible">True</property>
                 <property name="can-focus">False</property>
                 <property name="halign">center</property>
                 <property name="valign">center</property>
-                <property name="margin-top">3</property>
                 <property name="margin-bottom">3</property>
                 <property name="hexpand">True</property>
                 <property name="vexpand">False</property>
-                <property name="row-spacing">5</property>
-                <property name="column-spacing">10</property>
+                <property name="row-spacing">2</property>
+                <property name="column-spacing">3</property>
                 <property name="row-homogeneous">True</property>
                 <property name="column-homogeneous">True</property>
                 <child>
@@ -308,7 +308,7 @@
                 </child>
                 <child>
                   <object class="GtkCheckButton" id="day1">
-                    <property name="label" translatable="yes">Monday</property>
+                    <property name="label" translatable="yes">Mon</property>
                     <property name="visible">True</property>
                     <property name="can-focus">True</property>
                     <property name="receives-default">False</property>
@@ -317,12 +317,26 @@
                   </object>
                   <packing>
                     <property name="left-attach">1</property>
+                    <property name="top-attach">0</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkCheckButton" id="day2">
+                    <property name="label" translatable="yes">Tue</property>
+                    <property name="visible">True</property>
+                    <property name="can-focus">True</property>
+                    <property name="receives-default">False</property>
+                    <property name="draw-indicator">True</property>
+                    <signal name="toggled" handler="day_toggle" swapped="no"/>
+                  </object>
+                  <packing>
+                    <property name="left-attach">2</property>
                     <property name="top-attach">0</property>
                   </packing>
                 </child>
                 <child>
                   <object class="GtkCheckButton" id="day3">
-                    <property name="label" translatable="yes">Wednesday</property>
+                    <property name="label" translatable="yes">Wed</property>
                     <property name="visible">True</property>
                     <property name="can-focus">True</property>
                     <property name="receives-default">False</property>
@@ -332,13 +346,27 @@
                     <signal name="toggled" handler="day_toggle" swapped="no"/>
                   </object>
                   <packing>
+                    <property name="left-attach">3</property>
+                    <property name="top-attach">0</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkCheckButton" id="day4">
+                    <property name="label" translatable="yes">Thu</property>
+                    <property name="visible">True</property>
+                    <property name="can-focus">True</property>
+                    <property name="receives-default">False</property>
+                    <property name="draw-indicator">True</property>
+                    <signal name="toggled" handler="day_toggle" swapped="no"/>
+                  </object>
+                  <packing>
                     <property name="left-attach">0</property>
                     <property name="top-attach">1</property>
                   </packing>
                 </child>
                 <child>
-                  <object class="GtkCheckButton" id="day4">
-                    <property name="label" translatable="yes">Thursday</property>
+                  <object class="GtkCheckButton" id="day5">
+                    <property name="label" translatable="yes">Fri</property>
                     <property name="visible">True</property>
                     <property name="can-focus">True</property>
                     <property name="receives-default">False</property>
@@ -351,36 +379,8 @@
                   </packing>
                 </child>
                 <child>
-                  <object class="GtkCheckButton" id="day2">
-                    <property name="label" translatable="yes">Tuesday</property>
-                    <property name="visible">True</property>
-                    <property name="can-focus">True</property>
-                    <property name="receives-default">False</property>
-                    <property name="draw-indicator">True</property>
-                    <signal name="toggled" handler="day_toggle" swapped="no"/>
-                  </object>
-                  <packing>
-                    <property name="left-attach">2</property>
-                    <property name="top-attach">0</property>
-                  </packing>
-                </child>
-                <child>
-                  <object class="GtkCheckButton" id="day5">
-                    <property name="label" translatable="yes">Friday</property>
-                    <property name="visible">True</property>
-                    <property name="can-focus">True</property>
-                    <property name="receives-default">False</property>
-                    <property name="draw-indicator">True</property>
-                    <signal name="toggled" handler="day_toggle" swapped="no"/>
-                  </object>
-                  <packing>
-                    <property name="left-attach">2</property>
-                    <property name="top-attach">1</property>
-                  </packing>
-                </child>
-                <child>
                   <object class="GtkCheckButton" id="day6">
-                    <property name="label" translatable="yes">Saturday</property>
+                    <property name="label" translatable="yes">Sat</property>
                     <property name="visible">True</property>
                     <property name="can-focus">True</property>
                     <property name="receives-default">False</property>
@@ -390,13 +390,13 @@
                     <signal name="toggled" handler="day_toggle" swapped="no"/>
                   </object>
                   <packing>
-                    <property name="left-attach">0</property>
-                    <property name="top-attach">2</property>
+                    <property name="left-attach">2</property>
+                    <property name="top-attach">1</property>
                   </packing>
                 </child>
                 <child>
                   <object class="GtkCheckButton" id="day0">
-                    <property name="label" translatable="yes">Sunday</property>
+                    <property name="label" translatable="yes">Sun</property>
                     <property name="visible">True</property>
                     <property name="can-focus">True</property>
                     <property name="receives-default">False</property>
@@ -405,19 +405,16 @@
                     <signal name="toggled" handler="day_toggle" swapped="no"/>
                   </object>
                   <packing>
-                    <property name="left-attach">1</property>
-                    <property name="top-attach">2</property>
+                    <property name="left-attach">3</property>
+                    <property name="top-attach">1</property>
                   </packing>
-                </child>
-                <child>
-                  <placeholder/>
                 </child>
               </object>
               <packing>
                 <property name="expand">False</property>
                 <property name="fill">True</property>
                 <property name="padding">2</property>
-                <property name="position">3</property>
+                <property name="position">2</property>
               </packing>
             </child>
           </object>
@@ -465,13 +462,13 @@
                   <packing>
                     <property name="expand">True</property>
                     <property name="fill">True</property>
-                    <property name="padding">5</property>
+                    <property name="padding">2</property>
                     <property name="position">0</property>
                   </packing>
                 </child>
                 <child>
                   <object class="GtkButton" id="snooze">
-                    <property name="label" translatable="yes">Snooze for 5 minutes</property>
+                    <property name="label" translatable="yes">Snooze</property>
                     <property name="visible">True</property>
                     <property name="sensitive">False</property>
                     <property name="can-focus">True</property>
@@ -483,7 +480,7 @@
                   <packing>
                     <property name="expand">True</property>
                     <property name="fill">True</property>
-                    <property name="padding">5</property>
+                    <property name="padding">2</property>
                     <property name="position">1</property>
                   </packing>
                 </child>
@@ -522,6 +519,7 @@
                           <packing>
                             <property name="expand">False</property>
                             <property name="fill">True</property>
+                            <property name="padding">2</property>
                             <property name="position">0</property>
                           </packing>
                         </child>
@@ -535,12 +533,12 @@
                             <property name="fill-level">50</property>
                             <property name="round-digits">0</property>
                             <property name="digits">0</property>
-                            <property name="value-pos">bottom</property>
+                            <property name="value-pos">right</property>
                           </object>
                           <packing>
                             <property name="expand">True</property>
                             <property name="fill">True</property>
-                            <property name="padding">5</property>
+                            <property name="padding">2</property>
                             <property name="position">1</property>
                           </packing>
                         </child>
@@ -574,6 +572,8 @@
                   <object class="GtkLabel">
                     <property name="visible">True</property>
                     <property name="can-focus">False</property>
+                    <property name="margin-top">2</property>
+                    <property name="margin-bottom">2</property>
                     <property name="label" translatable="yes">Alarm Details</property>
                   </object>
                 </child>
@@ -581,7 +581,6 @@
               <packing>
                 <property name="expand">False</property>
                 <property name="fill">True</property>
-                <property name="pack-type">end</property>
                 <property name="position">1</property>
               </packing>
             </child>

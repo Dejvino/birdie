@@ -1,1 +1,2 @@
 mpris_server==0.2.16
+psutil==5.9.0
