@@ -19,14 +19,14 @@ user_folder = str(Path.home()) + "/.config/systemd/user"
 
 APP_NAME = 'birdie'
 APP_ID = 'com.github.dejvino.birdie'
-VERSION = "0.2"
+VERSION = "0.2.0"
 LICENSE = Gtk.License.GPL_3_0
 
 UI_FILE_LOCAL = "./app.ui"
 UI_FILE_GLOBAL = f"/usr/share/{APP_NAME}/app.ui"
 SET_USER_ALARM_COMMAND_LOCAL = "./set-user-alarm"
 SET_USER_ALARM_COMMAND_GLOBAL = f"/usr/lib/{APP_NAME}/libexec/set-user-alarm"
-INHIBIT_COMMAND_PREFIX = ["/usr/bin/gnome-session-inhibit", "--inhibit", "suspend,logout,idle"]
+INHIBIT_COMMAND_PREFIX = ["/usr/bin/gnome-session-inhibit", "--inhibit", "suspend:logout:idle"]
 ALARM_SOUND_COMMAND = [f"/usr/lib/{APP_NAME}/libexec/play-alarm-sound"]
 USE_MPRIS = True # requires mpris_server module, gets checked on module load
 USE_INHIBIT = True # requires session manager support, gets checked on startup
@@ -570,7 +570,7 @@ def runSanityCheck(command, message, details=None):
     showErrorDialog(f"{message}\n\nCheck console output for details.", title="Sanity Check Failed")
     sys.exit(1)
 
-if __name__ == "__main__":
+def runAllSanityChecks():
   runSanityCheck(["mkdir", "-p", user_folder],
     "Couldn't create configuration directory.")
   runSanityCheck(["gapplication"],
@@ -582,11 +582,34 @@ if __name__ == "__main__":
   runSanityCheck(["gnome-session-inhibit", "--version"],
     "Install missing packages for Gnome Session.",
     " Debian: gnome-session-bin")
+  global USE_INHIBIT
   try:
     check_output(["gnome-session-inhibit", "--inhibit", "suspend", "/bin/pwd"])
   except Exception as e:
     print("NOTICE: Gnome Session Inhibit is not supported by the environment.")
     print("Alarm will not be able to keep the system from suspending!")
     USE_INHIBIT = False
+
+if __name__ == "__main__":
+  if len(sys.argv) > 1:
+    arg0 = sys.argv[1]
+    if arg0 == '-v' or arg0 == '--version':
+      print(f"{APP_NAME} v{VERSION}")
+      sys.exit(0)
+    if arg0 == '-c' or arg0 == '--check':
+      print("Running sanity checks.")
+      runAllSanityChecks()
+      print("OK. Required checks passed.")
+      sys.exit(0)
+    if arg0 != '-h' and arg0 != '--help':
+      print(f"Unrecognized parameter '{arg0}'.")
+    print(f"Usage: {sys.argv[0]} [PARAMETER]")
+    print("")
+    print("Supported parameters:")
+    print(" -c --check      run sanity checks and exit")
+    print(" -v --version    print app version")
+    print(" -h --help       print this help")
+    sys.exit(0)
+  runAllSanityChecks()
   exit_status = app.run(sys.argv)
   sys.exit(exit_status)
