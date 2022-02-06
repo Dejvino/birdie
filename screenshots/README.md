@@ -6,6 +6,10 @@ Simple initial screen: set the time, enable, done!
 
 ![default](default.png)
 
+Both portrait and landscape layouts are supported.
+
+![landscape](landscape.png)
+
 ## Alarm Set and Waiting
 Alarm is scheduled, settings are locked. Countdown to the alarm is shown.
 
@@ -23,7 +27,7 @@ Alarm can be stopped or snoozed directly from the lock screen, no need to log in
 ![lockscreen](lockscreen.png)
 
 ## Customization
-Select different days, change the maximum alarm volume.
+Select different days, change the maximum alarm volume, test how it sounds.
 
 ![setup](setup.png)
 
