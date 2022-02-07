@@ -1,6 +1,7 @@
 CC	?= cc
 APP_NAME=birdie
 APP_ID=com.github.dejvino.birdie
+APP_VERSION=$(shell grep -P "VERSION = \"\d+.\d+.\d+\"" ${APP_NAME} | sed -E 's/.*"(.+)".*/\1/')
 
 set-user-alarm: set-user-alarm.c
 	$(CC) ${CFLAGS} ${LDFLAGS} -o set-user-alarm set-user-alarm.c
@@ -46,4 +47,4 @@ clean:
 	rm -f set-user-alarm
 
 install-deb: set-user-alarm
-	checkinstall "--requires=systemd, pulseaudio-utils, libglib2.0-bin, python3-psutil, python3-gi, gir1.2-glib-2.0, gir1.2-gtk-3.0" --pkgname=${APP_NAME} --pkglicense=GPL-2+ --nodoc --pkgversion=1.7 --pkgrelease=0 --include=listfile --deldesc=yes --backup=no -y
+	checkinstall "--requires=systemd, pulseaudio-utils, libglib2.0-bin, python3-psutil, python3-gi, gir1.2-glib-2.0, gir1.2-gtk-3.0" --pkgname=${APP_NAME} --pkglicense=GPL-2+ --nodoc --pkgversion=${APP_VERSION} --pkgrelease=0 --include=listfile --deldesc=yes --backup=no -y

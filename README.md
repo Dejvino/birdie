@@ -39,7 +39,7 @@ cd birdie
 
 # on Mobian/Debian:
 sudo apt install gcc make checkinstall python3-psutil python3-pip
-sudo pip install mpris-server
+pip3 install -r requirements.txt
 sudo make install-deb
 
 # on Arch:
