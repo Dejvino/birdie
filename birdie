@@ -19,7 +19,7 @@ user_folder = str(Path.home()) + "/.config/systemd/user"
 
 APP_NAME = 'birdie'
 APP_ID = 'com.github.dejvino.birdie'
-VERSION = "0.2.0"
+VERSION = "0.2.1"
 LICENSE = Gtk.License.GPL_3_0
 
 UI_FILE_LOCAL = "./app.ui"

@@ -1,2 +1,4 @@
-mpris_server==0.2.16
+mpris_server==0.4.2
 psutil==5.9.0
+
+typing_extensions==3.10.0.2 ; python_version=='3.9'
