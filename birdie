@@ -19,7 +19,7 @@ user_folder = str(Path.home()) + "/.config/systemd/user"
 
 APP_NAME = 'birdie'
 APP_ID = 'com.github.dejvino.birdie'
-VERSION = "0.2.1"
+VERSION = "0.3.0"
 LICENSE = Gtk.License.GPL_3_0
 
 UI_FILE_LOCAL = "./app.ui"
@@ -83,6 +83,7 @@ class AlarmApp(Gtk.Application):
       self.builder.add_from_file(UI_FILE_GLOBAL)
     self.builder.connect_signals(self)
     self.lefttime = self.builder.get_object("lefttime")
+    self.timenow = self.builder.get_object("timenow")
     self.hour = self.builder.get_object("hour")
     self.minute = self.builder.get_object("minute")
     #self.second = self.builder.get_object("second")
@@ -359,6 +360,7 @@ class AlarmApp(Gtk.Application):
   def update(self):
     label = 'Never'
     tn = GLib.DateTime.new_now_local()
+    self.timenow.set_label(tn.format("%H:%M"))
     wtime = self.calc_wakeup_time()
     if wtime:
       total_sec_left = int(wtime.difference(tn)/1000/1000)

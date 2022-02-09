@@ -173,18 +173,60 @@
                 <property name="can-focus">False</property>
                 <property name="homogeneous">True</property>
                 <child>
-                  <object class="GtkLabel" id="lefttime">
+                  <object class="GtkBox">
                     <property name="visible">True</property>
                     <property name="can-focus">False</property>
-                    <property name="halign">center</property>
-                    <property name="margin-start">3</property>
-                    <property name="margin-end">5</property>
-                    <property name="hexpand">True</property>
-                    <property name="xpad">2</property>
-                    <property name="ypad">2</property>
-                    <property name="label" translatable="yes">00:11:22 left</property>
-                    <property name="use-markup">True</property>
-                    <property name="justify">center</property>
+                    <property name="margin-bottom">8</property>
+                    <property name="orientation">vertical</property>
+                    <child>
+                      <object class="GtkLabel" id="timenow">
+                        <property name="visible">True</property>
+                        <property name="can-focus">False</property>
+                        <property name="halign">center</property>
+                        <property name="margin-start">3</property>
+                        <property name="margin-end">5</property>
+                        <property name="hexpand">True</property>
+                        <property name="xpad">2</property>
+                        <property name="ypad">2</property>
+                        <property name="label" translatable="yes">12:34</property>
+                        <property name="justify">center</property>
+                        <property name="width-chars">5</property>
+                        <property name="max-width-chars">6</property>
+                        <attributes>
+                          <attribute name="weight" value="bold"/>
+                          <attribute name="stretch" value="normal"/>
+                          <attribute name="scale" value="2.5"/>
+                        </attributes>
+                      </object>
+                      <packing>
+                        <property name="expand">True</property>
+                        <property name="fill">True</property>
+                        <property name="padding">2</property>
+                        <property name="position">0</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkLabel" id="lefttime">
+                        <property name="visible">True</property>
+                        <property name="can-focus">False</property>
+                        <property name="halign">center</property>
+                        <property name="margin-left">3</property>
+                        <property name="margin-right">5</property>
+                        <property name="margin-start">3</property>
+                        <property name="margin-end">5</property>
+                        <property name="hexpand">True</property>
+                        <property name="xpad">2</property>
+                        <property name="ypad">2</property>
+                        <property name="label" translatable="yes">00:11:22 left</property>
+                        <property name="use-markup">True</property>
+                        <property name="justify">center</property>
+                      </object>
+                      <packing>
+                        <property name="expand">False</property>
+                        <property name="fill">True</property>
+                        <property name="position">1</property>
+                      </packing>
+                    </child>
                   </object>
                   <packing>
                     <property name="expand">False</property>
