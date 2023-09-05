@@ -249,7 +249,10 @@ class AlarmApp(Gtk.Application):
     try:
       if self.volumeoption.get_active():
         try:
+          global first_sink
+          global sink_volume
           first_sink = str(check_output(["sh", "-c", "LANGUAGE=C pactl list| grep -m 1 Sink | cut -d '#' -f 2"]), "utf-8").split("\n")[0]
+          sink_volume = check_output(["sh", "-c", f"LANGUAGE=C pactl get-sink-volume {first_sink} | grep -o -Ei -m 1 [[:digit:]]+% | head -1 | cut -d '%' -f 1"]).decode('utf-8').split("\n")[0]
           check_output(["pactl", "set-sink-mute", first_sink, "0"])
           check_output(["pactl", "set-sink-volume", first_sink, str(int(self.volumescale.get_value()))+ "%"])
         except Exception as e:
@@ -277,6 +280,7 @@ class AlarmApp(Gtk.Application):
         print(e)
       self.alarm_proc = 0
       self.alarm_testing = False
+      self.restore_volume()
       if self.event_handler:
         self.event_handler.event_stop()
 
@@ -299,6 +303,9 @@ class AlarmApp(Gtk.Application):
       self.enable_alarm()
     else:
       self.disable_alarm()
+
+  def restore_volume (self):
+    check_output(["pactl", "set-sink-volume", first_sink, str(sink_volume)+ "%"])
 
   def disable_elements(self, val):
     self.cancelbutton.set_sensitive(False)
